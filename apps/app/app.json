@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "scheme": "acme",
+    "platforms": ["ios", "web"],
+    "userInterfaceStyle": "automatic",
+    "plugins": [
+      "expo-router"
+    ],
+    "name": "app",
+    "slug": "app",
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    }
+  }
+}
