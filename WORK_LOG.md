@@ -1,6 +1,6 @@
 # Work Log
 
-## 2026-03-16
+## 2026-03-17
 
 ### What Changed
 
@@ -9,19 +9,27 @@
 - Prepared the Expo web app for Vercel static deployment.
 - Fixed local Supabase connectivity by correcting the public `anon` key in `apps/app/.env`.
 - Applied the no-auth Supabase schema and seed data successfully.
-- Verified the dashboard can now load recent weights from Supabase.
+- Verified the dashboard and injections screens load live Supabase data.
+- Added weight summary cards, date formatting, range filtering, capped lists, and `Load More` behavior.
+- Added backend-backed height (`1.73m`) for BMI calculation via `profile_settings`.
+- Built real create/edit/delete flows for weight and injection entries in `apps/app/app/(tabs)/log.tsx`.
+- Added calendar date picking to the entry forms.
+- Made main-screen entry rows tappable so they open edit mode.
 
 ### Current Working State
 
 - `apps/app` runs locally with Expo web.
-- Dashboard is partially implemented and working:
+- Dashboard is implemented and working:
   - reads weight history from Supabase
   - supports range filtering and capped lists with `Load More`
-- Injections screen is implemented:
+- Injections screen is implemented and working:
   - reads injection history from Supabase
   - shows summary stats
   - caps the visible list and supports `Load More`
-- Log screen is still a placeholder.
+- Log screen is implemented:
+  - weight-only and injection-only modes
+  - create/edit/delete flows
+  - calendar date selection
 
 ### Important Repo Notes
 
@@ -31,12 +39,18 @@
 
 ### Next Step For Tomorrow
 
-Build the real entry-management flow in `apps/app/app/(tabs)/log.tsx`:
+Deploy and verify the first Vercel build:
 
-1. Create a real `Log weight` form.
-2. Create a real `Log injection` form.
-3. Add edit mode support for both forms.
-4. Allow tapping an existing weight/injection entry from the main screens to open edit mode.
+1. Import `fabgraham/weight-journey` into Vercel.
+2. Set the root directory to `apps/app`.
+3. Add `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
+4. Run the first deployment and test it on another device.
+
+After that:
+
+1. Decide what chart polish is still needed.
+2. Decide whether any log/edit UX cleanup is needed.
+3. Optionally refine the entry row actions/menus further.
 
 ### How To Resume Tomorrow
 

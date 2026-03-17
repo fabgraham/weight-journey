@@ -12,20 +12,22 @@ This document turns the PRD into an actionable build checklist, with a strict se
   - Supabase schema applied successfully
   - Seed data applied successfully
   - Expo web app loads locally
-  - Dashboard reads recent weights from Supabase successfully
+  - Dashboard reads full weight history from Supabase successfully
+  - Injections screen reads full injection history from Supabase successfully
+  - Weight and injection entries can be created, edited, and deleted via `app/(tabs)/log.tsx`
+  - Existing rows on the main screens open edit mode
+  - Calendar date picker is in place for entry forms
 - Not implemented yet:
-  - Add Entry forms
   - Shared UI/date/theme foundation
-  - Edit flows for existing weight and injection entries
+  - Final chart polish and richer chart interaction
+  - Vercel first public build verification
 
 ## Recommended Next Step
 
-- Do not jump straight into section 6 screen work.
-- Complete section 4 feature modules first, then wire section 6 screens.
 - Immediate next implementation target:
-  - Build `app/(tabs)/log.tsx` into a real entry management screen
-  - Support creating new weight and injection entries
-  - Support editing existing weight and injection entries from the main screens
+  - Deploy the first Vercel build and verify the app outside the local machine
+  - After deployment, polish the dashboard/injections UI details and chart interactions
+  - Then decide whether the log/edit flow needs further UX cleanup
 
 ## Separation Principle (Non-Negotiable)
 
@@ -213,11 +215,11 @@ on public.injection_entries (user_id, date desc);
 - [ ] Weight chart:
   - [ ] Line chart of all entries
   - [ ] Goal line at 70 kg (dashed)
-  - [ ] Time filters: All / 6m / 3m / 1m / 1w
+  - [x] Time filters: All / 6m / 3m / 1m
   - [ ] Tap point -> tooltip with date + weight
 - [ ] Recent list: last 5 weight entries, newest first
 - [ ] Entry management:
-  - [ ] Open an existing weight entry for editing from the main screen
+  - [x] Open an existing weight entry for editing from the main screen
 
 ### Injections — `app/(tabs)/injections.tsx`
 
@@ -230,22 +232,22 @@ on public.injection_entries (user_id, date desc);
   - [ ] Color-coded by dose level
 - [ ] Full list: all injection entries newest first (date / dose / site)
 - [ ] Entry management:
-  - [ ] Open an existing injection entry for editing from the main screen
+  - [x] Open an existing injection entry for editing from the main screen
 
 ### Add Entry — `app/(tabs)/log.tsx`
 
-- [ ] Two sections/cards on one screen:
-  - [ ] Log weight
-  - [ ] Log injection
+- [x] Two sections/cards on one screen:
+  - [x] Log weight
+  - [x] Log injection
 - [ ] Support edit mode for both sections:
-  - [ ] Prefill existing values when editing
-  - [ ] Save changes back to Supabase
-  - [ ] Support delete where appropriate
+  - [x] Prefill existing values when editing
+  - [x] Save changes back to Supabase
+  - [x] Support delete where appropriate
 - [ ] Validation:
-  - [ ] Weight 30–300 kg
-  - [ ] Date cannot be in the future
-  - [ ] Duplicate weight date -> confirmation before overwrite
-  - [ ] All fields required before Save enables
+  - [x] Weight 30–300 kg
+  - [x] Date cannot be in the future
+  - [x] Duplicate weight date -> confirmation before overwrite
+  - [x] All fields required before Save enables
 
 ## 7) Cross-Platform Verification + QA
 
