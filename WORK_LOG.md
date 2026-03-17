@@ -15,8 +15,12 @@
 
 - `apps/app` runs locally with Expo web.
 - Dashboard is partially implemented and working:
-  - reads recent weights from Supabase
-- Injections screen is still a placeholder.
+  - reads weight history from Supabase
+  - supports range filtering and capped lists with `Load More`
+- Injections screen is implemented:
+  - reads injection history from Supabase
+  - shows summary stats
+  - caps the visible list and supports `Load More`
 - Log screen is still a placeholder.
 
 ### Important Repo Notes
@@ -27,17 +31,12 @@
 
 ### Next Step For Tomorrow
 
-Build the Injections vertical first before polishing screens:
+Build the real entry-management flow in `apps/app/app/(tabs)/log.tsx`:
 
-1. Create `apps/app/src/features/injections/api.ts`.
-2. Create `apps/app/src/features/injections/store.ts`.
-3. Create `apps/app/src/features/injections/selectors.ts`.
-4. Update `apps/app/app/(tabs)/injections.tsx` to:
-   - fetch injection entries
-   - show total injections
-   - show current dose
-   - show last injection date
-   - render a newest-first list
+1. Create a real `Log weight` form.
+2. Create a real `Log injection` form.
+3. Add edit mode support for both forms.
+4. Allow tapping an existing weight/injection entry from the main screens to open edit mode.
 
 ### How To Resume Tomorrow
 

@@ -5,6 +5,19 @@
 create extension if not exists pgcrypto;
 
 -- -----------------------------
+-- profile_settings
+-- -----------------------------
+create table if not exists public.profile_settings (
+  id integer primary key default 1,
+  height_m numeric(3,2) not null,
+  created_at timestamptz not null default now(),
+  constraint profile_settings_single_row check (id = 1),
+  constraint profile_settings_height_range check (height_m >= 0.5 and height_m <= 2.5)
+);
+
+alter table public.profile_settings disable row level security;
+
+-- -----------------------------
 -- weight_entries
 -- -----------------------------
 create table if not exists public.weight_entries (

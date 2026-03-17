@@ -1,5 +1,10 @@
 begin;
 
+insert into public.profile_settings (id, height_m)
+values (1, 1.73)
+on conflict (id) do update
+set height_m = excluded.height_m;
+
 insert into public.weight_entries (date, weight_kg)
 select t.date::date, t.weight_kg
 from (values

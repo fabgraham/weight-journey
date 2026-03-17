@@ -14,19 +14,18 @@ This document turns the PRD into an actionable build checklist, with a strict se
   - Expo web app loads locally
   - Dashboard reads recent weights from Supabase successfully
 - Not implemented yet:
-  - Injections feature read path
   - Add Entry forms
-  - Weight full-data/chart path
   - Shared UI/date/theme foundation
+  - Edit flows for existing weight and injection entries
 
 ## Recommended Next Step
 
 - Do not jump straight into section 6 screen work.
 - Complete section 4 feature modules first, then wire section 6 screens.
 - Immediate next implementation target:
-  - Build `src/features/injections/{api.ts,store.ts,selectors.ts}`
-  - Replace the injections placeholder screen with real Supabase reads, summary stats, and a newest-first list
-  - Then expand the weight module beyond `recent` into full-entry loading and derived selectors
+  - Build `app/(tabs)/log.tsx` into a real entry management screen
+  - Support creating new weight and injection entries
+  - Support editing existing weight and injection entries from the main screens
 
 ## Separation Principle (Non-Negotiable)
 
@@ -175,6 +174,7 @@ on public.injection_entries (user_id, date desc);
 - [ ] `src/features/weight/api.ts`
   - [ ] Fetch entries (all + date-range filters)
   - [ ] Upsert by date (for overwrite-confirm flow)
+  - [ ] Update/delete existing entries for edit flow
   - [ ] Fetch recent N
 - [ ] `src/features/weight/store.ts` + `selectors.ts`
   - [ ] Entries state + loading/error
@@ -188,6 +188,7 @@ on public.injection_entries (user_id, date desc);
 - [ ] `src/features/injections/api.ts`
   - [ ] Fetch entries (all + optional date-range)
   - [ ] Insert entry
+  - [ ] Update/delete existing entries for edit flow
 - [ ] `src/features/injections/store.ts` + `selectors.ts`
   - [ ] Entries state + loading/error
   - [ ] Derived values: total count, latest dose, last injection date, chart-ready series
@@ -215,6 +216,8 @@ on public.injection_entries (user_id, date desc);
   - [ ] Time filters: All / 6m / 3m / 1m / 1w
   - [ ] Tap point -> tooltip with date + weight
 - [ ] Recent list: last 5 weight entries, newest first
+- [ ] Entry management:
+  - [ ] Open an existing weight entry for editing from the main screen
 
 ### Injections — `app/(tabs)/injections.tsx`
 
@@ -226,12 +229,18 @@ on public.injection_entries (user_id, date desc);
   - [ ] Bar or dot chart (dose over time)
   - [ ] Color-coded by dose level
 - [ ] Full list: all injection entries newest first (date / dose / site)
+- [ ] Entry management:
+  - [ ] Open an existing injection entry for editing from the main screen
 
 ### Add Entry — `app/(tabs)/log.tsx`
 
 - [ ] Two sections/cards on one screen:
   - [ ] Log weight
   - [ ] Log injection
+- [ ] Support edit mode for both sections:
+  - [ ] Prefill existing values when editing
+  - [ ] Save changes back to Supabase
+  - [ ] Support delete where appropriate
 - [ ] Validation:
   - [ ] Weight 30–300 kg
   - [ ] Date cannot be in the future
