@@ -6,6 +6,7 @@ import {
   getInjectionCount,
   getLatestInjection,
 } from "../../src/features/injections/selectors";
+import { InjectionDoseChart } from "../../src/features/injections/components/InjectionDoseChart";
 import { useInjectionsStore } from "../../src/features/injections/store";
 import { formatDisplayDate } from "../../src/shared/date";
 import { ProgressTopNav } from "../../src/shared/ui/ProgressTopNav";
@@ -56,6 +57,8 @@ export default function InjectionsScreen() {
             {latestInjection ? formatDisplayDate(latestInjection.date) : "--"}
           </Text>
         </View>
+
+        {!loading && !error ? <InjectionDoseChart entries={entries} /> : null}
 
         <View className="mt-8 rounded-[24px] bg-[#f8f5ef] p-5">
           <Text className="text-xl font-semibold text-[#173126]">Entries</Text>

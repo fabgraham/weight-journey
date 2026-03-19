@@ -8,6 +8,15 @@ export function formatDisplayDate(value: string) {
   }).format(date);
 }
 
+export function formatShortDisplayDate(value: string) {
+  const date = new Date(`${value}T00:00:00`);
+
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+  }).format(date);
+}
+
 export function formatMonthYear(value: Date) {
   return new Intl.DateTimeFormat("en-GB", {
     month: "long",

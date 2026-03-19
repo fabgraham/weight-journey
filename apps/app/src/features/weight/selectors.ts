@@ -1,6 +1,7 @@
 import type { WeightEntry } from "./types";
 
 export type WeightRange = "All" | "1m" | "3m" | "6m";
+const JOURNEY_START_DATE = "2025-02-12";
 
 function subtractDays(date: Date, days: number) {
   const next = new Date(date);
@@ -68,4 +69,12 @@ export function getWeightDomain(entries: WeightEntry[]) {
     min: Math.min(...values),
     max: Math.max(...values),
   };
+}
+
+export function getDaysOnJourney(entries: WeightEntry[]) {
+  const latest = getLatestWeight(entries);
+  const endDate = latest ? new Date(`${latest.date}T00:00:00`) : new Date();
+  const startDate = new Date(`${JOURNEY_START_DATE}T00:00:00`);
+  const diffMs = endDate.getTime() - startDate.getTime();
+  return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
 }

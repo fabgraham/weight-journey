@@ -5,9 +5,9 @@ import { useRouter } from "expo-router";
 import { WeightTrendCard } from "../../src/features/weight/components/WeightTrendCard";
 import {
   getBmi,
+  getDaysOnJourney,
   getFilteredWeights,
   getLatestWeight,
-  getRecentWeights,
   getTotalLost,
   getVisibleWeights,
   getWeightChangePercent,
@@ -59,6 +59,7 @@ export default function DashboardScreen() {
   const totalLost = getTotalLost(entries);
   const weightChangePercent = getWeightChangePercent(entries);
   const bmi = getBmi(entries, heightMetres);
+  const daysOnJourney = getDaysOnJourney(entries);
   const filteredEntries = getFilteredWeights(entries, selectedRange);
   const visibleEntries = getVisibleWeights(filteredEntries, selectedRange, showAllEntries);
 
@@ -101,6 +102,11 @@ export default function DashboardScreen() {
             <View className="w-[48%] rounded-[24px] bg-[#faf8f3] px-5 py-5">
               <Text className="text-lg text-[#173126]">Goal</Text>
               <Text className="mt-2 text-4xl font-semibold text-[#173126]">70 kg</Text>
+            </View>
+
+            <View className="w-[48%] rounded-[24px] bg-[#faf8f3] px-5 py-5">
+              <Text className="text-lg text-[#173126]">Days on journey</Text>
+              <Text className="mt-2 text-4xl font-semibold text-[#173126]">{daysOnJourney}</Text>
             </View>
           </View>
         ) : null}
