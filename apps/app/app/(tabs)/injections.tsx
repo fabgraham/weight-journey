@@ -58,6 +58,13 @@ export default function InjectionsScreen() {
           </Text>
         </View>
 
+        <Pressable
+          className="mt-6 rounded-full bg-[#032414] px-6 py-5"
+          onPress={() => router.push({ pathname: "/log", params: { type: "injection" } })}
+        >
+          <Text className="text-center text-2xl font-semibold text-white">Log injection</Text>
+        </Pressable>
+
         {!loading && !error ? <InjectionDoseChart entries={entries} /> : null}
 
         <View className="mt-8 rounded-[24px] bg-[#f8f5ef] p-5">
@@ -103,20 +110,6 @@ export default function InjectionsScreen() {
             </View>
           )}
         </View>
-
-        <Pressable
-          className="mt-8 rounded-full bg-[#032414] px-6 py-5"
-          onPress={() => router.push({ pathname: "/log", params: { type: "injection" } })}
-        >
-          <Text className="text-center text-2xl font-semibold text-white">Log injection</Text>
-        </Pressable>
-
-        <Pressable
-          className="mt-4 rounded-full border-2 border-[#173126] bg-transparent px-6 py-5"
-          onPress={() => router.replace("/")}
-        >
-          <Text className="text-center text-2xl font-semibold text-[#173126]">Back to weight</Text>
-        </Pressable>
       </View>
     </ScrollView>
   );

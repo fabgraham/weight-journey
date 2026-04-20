@@ -111,6 +111,13 @@ export default function DashboardScreen() {
           </View>
         ) : null}
 
+        <Pressable
+          className="mt-6 rounded-full bg-[#032414] px-6 py-5"
+          onPress={() => router.push({ pathname: "/log", params: { type: "weight" } })}
+        >
+          <Text className="text-center text-2xl font-semibold text-white">Log weight</Text>
+        </Pressable>
+
         <View className="mt-6 flex-row gap-5">
           {["All", "1m", "3m", "6m"].map((range) => (
             <Pressable
@@ -208,20 +215,6 @@ export default function DashboardScreen() {
         </View>
 
         {!entriesLoading && !entriesError ? <WeightTrendCard entries={filteredEntries} range={selectedRange} /> : null}
-
-        <Pressable
-          className="mt-8 rounded-full bg-[#032414] px-6 py-5"
-          onPress={() => router.push({ pathname: "/log", params: { type: "weight" } })}
-        >
-          <Text className="text-center text-2xl font-semibold text-white">Log weight</Text>
-        </Pressable>
-
-        <Pressable
-          className="mt-4 rounded-full border-2 border-[#173126] bg-transparent px-6 py-5"
-          onPress={() => router.replace("/injections")}
-        >
-          <Text className="text-center text-2xl font-semibold text-[#173126]">See injections</Text>
-        </Pressable>
       </View>
     </ScrollView>
   );

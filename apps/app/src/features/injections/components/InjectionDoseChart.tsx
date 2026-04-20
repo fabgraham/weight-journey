@@ -1,5 +1,5 @@
 import { Text, View } from "react-native";
-import Svg, { Line, Rect } from "react-native-svg";
+import Svg, { Circle, Line, Path, Rect, Text as SvgText } from "react-native-svg";
 
 import { formatShortDisplayDate } from "../../../shared/date";
 import type { InjectionEntry } from "../types";
@@ -8,9 +8,9 @@ type InjectionDoseChartProps = {
   entries: InjectionEntry[];
 };
 
-const CHART_WIDTH = 300;
+const CHART_WIDTH = 320;
 const CHART_HEIGHT = 180;
-const PADDING_X = 20;
+const PADDING_X = 34;
 const PADDING_Y = 20;
 
 function getDoseColor(dose: number) {
@@ -22,22 +22,55 @@ function getDoseColor(dose: number) {
 }
 
 export function InjectionDoseChart({ entries }: InjectionDoseChartProps) {
-  const latestEntries = entries.slice().reverse();
-  const visibleEntries = latestEntries.length > 12 ? latestEntries.slice(0, 12) : latestEntries;
-  const minDose = 2.5;
+  const visibleEntries = [...entries].reverse();
+  const minDose = 0;
   const maxDose = 12.5;
   const span = maxDose - minDose;
+  const barSpacing = (CHART_WIDTH - PADDING_X * 2) / Math.max(visibleEntries.length, 1);
+  const barWidth = Math.max(10, Math.min(18, barSpacing * 0.52));
+  const tickStep = Math.max(1, Math.ceil(visibleEntries.length / 5));
+  const progressionPath = visibleEntries
+    .map((entry, index) => {
+      const x = PADDING_X + index * barSpacing + barSpacing / 2;
+      const y =
+        CHART_HEIGHT -
+        PADDING_Y -
+        ((entry.dose_mg - minDose) / span) * (CHART_HEIGHT - PADDING_Y * 2);
+
+      return `${index === 0 ? "M" : "L"} ${x} ${y}`;
+    })
+    .join(" ");
+  const latestDose = entries[0]?.dose_mg ?? null;
+  let phaseStartDate = entries[0]?.date ?? null;
+  let phaseCount = 0;
+  for (const entry of entries) {
+    if (entry.dose_mg === latestDose) {
+      phaseStartDate = entry.date;
+      phaseCount += 1;
+    } else {
+      break;
+    }
+  }
 
   return (
     <View className="mt-8 rounded-[24px] bg-[#f8f5ef] p-5">
-      <Text className="text-xl font-semibold text-[#173126]">Dose chart</Text>
+      <Text className="text-xl font-semibold text-[#173126]">Dose history</Text>
+      <Text className="mt-2 text-sm text-[#5f6c64]">Full treatment journey across all injections.</Text>
+      {latestDose != null && phaseStartDate ? (
+        <View className="mt-4 rounded-2xl bg-white px-4 py-3">
+          <Text className="text-sm font-medium text-[#5f6c64]">Current phase</Text>
+          <Text className="mt-1 text-base font-semibold text-[#173126]">
+            {latestDose} mg for {phaseCount} injections since {formatShortDisplayDate(phaseStartDate)}
+          </Text>
+        </View>
+      ) : null}
 
       {visibleEntries.length ? (
         <>
           <View className="mt-5 overflow-hidden rounded-[24px] bg-white">
             <Svg width="100%" height={CHART_HEIGHT} viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}>
               <Rect x="0" y="0" width={CHART_WIDTH} height={CHART_HEIGHT} fill="#ffffff" />
-              <Rect x="0" y="0" width="72" height={CHART_HEIGHT} fill="#faf5ea" opacity="0.9" />
+              <Rect x="0" y="0" width="78" height={CHART_HEIGHT} fill="#faf5ea" opacity="0.9" />
               {[2.5, 5, 7.5, 10, 12.5].map((dose) => {
                 const y =
                   CHART_HEIGHT -
@@ -56,23 +89,48 @@ export function InjectionDoseChart({ entries }: InjectionDoseChartProps) {
                   />
                 );
               })}
+              {[2.5, 5, 7.5, 10, 12.5].map((dose) => {
+                const y =
+                  CHART_HEIGHT -
+                  PADDING_Y -
+                  ((dose - minDose) / span) * (CHART_HEIGHT - PADDING_Y * 2);
+
+                return (
+                  <SvgText
+                    key={`label-${dose}`}
+                    x="10"
+                    y={y + 4}
+                    fontSize="11"
+                    fill="#526056"
+                  >
+                    {dose}
+                  </SvgText>
+                );
+              })}
+
+              <Path
+                d={progressionPath}
+                fill="none"
+                stroke="#173126"
+                strokeOpacity="0.45"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
 
               {visibleEntries.map((entry, index) => {
-                const x =
-                  PADDING_X +
-                  (index / Math.max(visibleEntries.length - 1, 1)) * (CHART_WIDTH - PADDING_X * 2);
-                const barWidth = 12;
+                const x = PADDING_X + index * barSpacing + barSpacing / 2;
                 const topY =
                   CHART_HEIGHT -
                   PADDING_Y -
                   ((entry.dose_mg - minDose) / span) * (CHART_HEIGHT - PADDING_Y * 2);
-                const height = CHART_HEIGHT - PADDING_Y - topY;
+                const height = Math.max(8, CHART_HEIGHT - PADDING_Y - topY);
 
                 return (
                   <Rect
                     key={entry.id}
                     x={x - barWidth / 2}
-                    y={topY}
+                    y={CHART_HEIGHT - PADDING_Y - height}
                     width={barWidth}
                     height={height}
                     rx="6"
@@ -82,16 +140,43 @@ export function InjectionDoseChart({ entries }: InjectionDoseChartProps) {
                   />
                 );
               })}
-            </Svg>
-          </View>
+              {visibleEntries.map((entry, index) => {
+                const x = PADDING_X + index * barSpacing + barSpacing / 2;
+                const y =
+                  CHART_HEIGHT -
+                  PADDING_Y -
+                  ((entry.dose_mg - minDose) / span) * (CHART_HEIGHT - PADDING_Y * 2);
 
-          <View className="mt-4 flex-row items-center justify-between">
-            <Text className="text-sm text-[#526056]">
-              {visibleEntries[0] ? formatShortDisplayDate(visibleEntries[0].date) : ""}
-            </Text>
-            <Text className="text-sm text-[#526056]">
-              {visibleEntries.at(-1) ? formatShortDisplayDate(visibleEntries.at(-1)!.date) : ""}
-            </Text>
+                return (
+                  <Circle
+                    key={`point-${entry.id}`}
+                    cx={x}
+                    cy={y}
+                    r="3.4"
+                    fill="#173126"
+                    stroke="#fff"
+                    strokeWidth="1"
+                  />
+                );
+              })}
+              {visibleEntries.map((entry, index) => {
+                if (index % tickStep !== 0 && index !== visibleEntries.length - 1) return null;
+                const x = PADDING_X + index * barSpacing + barSpacing / 2;
+
+                return (
+                  <SvgText
+                    key={`date-${entry.id}`}
+                    x={x}
+                    y={CHART_HEIGHT - 4}
+                    fontSize="10"
+                    fill="#526056"
+                    textAnchor="middle"
+                  >
+                    {formatShortDisplayDate(entry.date)}
+                  </SvgText>
+                );
+              })}
+            </Svg>
           </View>
 
           <View className="mt-4 flex-row flex-wrap gap-x-4 gap-y-2">
