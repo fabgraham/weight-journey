@@ -130,6 +130,8 @@ export default function DashboardScreen() {
           ))}
         </View>
 
+        {!entriesLoading && !entriesError ? <WeightTrendCard entries={filteredEntries} range={selectedRange} /> : null}
+
         <View className="mt-8 rounded-[24px] bg-[#f8f5ef] px-5 py-6">
           {entriesLoading ? (
             <View className="items-start">
@@ -156,53 +158,47 @@ export default function DashboardScreen() {
               </View>
 
               <View className="mt-8 border-t border-[#e4ddd2] pt-5">
-                <View className="flex-row items-center justify-between">
-                  <Text className="text-base font-semibold text-[#173126]">Recent entries</Text>
-                  <Text className="text-sm text-[#7b7a74]">Goal 70 kg</Text>
-                </View>
+                <Text className="text-base font-semibold text-[#173126]">Recent entries</Text>
 
-                <View className="mt-4 gap-3">
-                  {visibleEntries.map((e) => (
+                <View className="mt-3">
+                  {visibleEntries.map((e, i) => {
+                    const prev = visibleEntries[i + 1];
+                    const delta = prev != null ? Number((e.weight_kg - prev.weight_kg).toFixed(1)) : null;
+                    return (
+                      <Pressable
+                        key={e.id}
+                        className="flex-row items-center justify-between border-b border-[#f0ebe2] py-3"
+                        onPress={() =>
+                          router.push({
+                            pathname: "/log",
+                            params: { type: "weight", id: e.id },
+                          })
+                        }
+                      >
+                        <View className="flex-1">
+                          <Text className="text-base font-semibold text-[#173126]">{e.weight_kg} kg</Text>
+                          <Text className="mt-0.5 text-xs text-[#6a7068]">{formatDisplayDate(e.date)}</Text>
+                        </View>
+                        {delta != null ? (
+                          <Text
+                            className={`text-sm font-semibold ${delta < 0 ? "text-[#77a48f]" : delta > 0 ? "text-[#c0604a]" : "text-[#9a9890]"}`}
+                          >
+                            {delta < 0 ? `${delta}` : delta > 0 ? `+${delta}` : "–"} kg
+                          </Text>
+                        ) : (
+                          <Text className="text-xs text-[#9a9890]">first</Text>
+                        )}
+                      </Pressable>
+                    );
+                  })}
+                  {!showAllEntries && visibleEntries.length < filteredEntries.length ? (
                     <Pressable
-                      key={e.id}
-                      className="flex-row items-start justify-between border-b border-[#efe8dc] py-5"
-                      onPress={() =>
-                        router.push({
-                          pathname: "/log",
-                          params: { type: "weight", id: e.id },
-                        })
-                      }
-                    >
-                      <View className="flex-1 pr-4">
-                        <Text className="text-2xl font-semibold text-[#173126]">{e.weight_kg} kg</Text>
-                        <Text className="mt-2 text-base text-[#314238]">{formatDisplayDate(e.date)}</Text>
-                      </View>
-
-                      <Text className="pt-1 text-3xl leading-6 text-[#314238]">⋮</Text>
-                    </Pressable>
-                  ))}
-                  {selectedRange === "All" && filteredEntries.length > 12 && !showAllEntries ? (
-                    <Pressable
-                      className="mt-2 rounded-full border-2 border-[#173126] bg-transparent px-6 py-5"
+                      className="mt-3 rounded-full border border-[#d4cfc8] bg-transparent px-6 py-3"
                       onPress={() => setShowAllEntries(true)}
                     >
-                      <Text className="text-center text-2xl font-semibold text-[#173126]">Load More</Text>
-                    </Pressable>
-                  ) : null}
-                  {selectedRange === "3m" && filteredEntries.length > 8 && !showAllEntries ? (
-                    <Pressable
-                      className="mt-2 rounded-full border-2 border-[#173126] bg-transparent px-6 py-5"
-                      onPress={() => setShowAllEntries(true)}
-                    >
-                      <Text className="text-center text-2xl font-semibold text-[#173126]">Load More</Text>
-                    </Pressable>
-                  ) : null}
-                  {selectedRange === "6m" && filteredEntries.length > 12 && !showAllEntries ? (
-                    <Pressable
-                      className="mt-2 rounded-full border-2 border-[#173126] bg-transparent px-6 py-5"
-                      onPress={() => setShowAllEntries(true)}
-                    >
-                      <Text className="text-center text-2xl font-semibold text-[#173126]">Load More</Text>
+                      <Text className="text-center text-sm font-semibold text-[#173126]">
+                        Show all {filteredEntries.length} entries
+                      </Text>
                     </Pressable>
                   ) : null}
                   {!visibleEntries.length ? (
@@ -214,7 +210,6 @@ export default function DashboardScreen() {
           )}
         </View>
 
-        {!entriesLoading && !entriesError ? <WeightTrendCard entries={filteredEntries} range={selectedRange} /> : null}
       </View>
     </ScrollView>
   );

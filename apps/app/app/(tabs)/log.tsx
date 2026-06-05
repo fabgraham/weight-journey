@@ -178,9 +178,7 @@ export default function LogScreen() {
 
       await upsertWeightEntry({ date: weightDate, weight_kg: parsedWeight });
       await refreshLists();
-      setWeightMessage("Weight entry saved.");
-      setWeightValue("");
-      setWeightDate(today);
+      router.replace("/");
     } catch (error) {
       setWeightError(getErrorMessage(error, "Failed to save weight entry"));
     } finally {
