@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { apiRequest } from "./apiClient";
 
 export type ProfileSettings = {
   id: number;
@@ -7,12 +7,5 @@ export type ProfileSettings = {
 };
 
 export async function getProfileSettings(): Promise<ProfileSettings | null> {
-  const { data, error } = await supabase
-    .from("profile_settings")
-    .select("id,height_m,created_at")
-    .eq("id", 1)
-    .maybeSingle();
-
-  if (error) throw error;
-  return (data as ProfileSettings | null) ?? null;
+  return apiRequest<ProfileSettings | null>("/profile");
 }
