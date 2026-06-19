@@ -10,10 +10,12 @@ type WeightEntry = {
 
 export const weightRoutes = new Hono();
 
+const SELECT_WEIGHT = "SELECT id, TO_CHAR(date, 'YYYY-MM-DD') AS date, weight_kg, created_at FROM weight_entries";
+
 weightRoutes.get("/recent", async (c) => {
   const limit = Number(c.req.query("limit") ?? 5);
   const result = await pool.query<WeightEntry>(
-    "SELECT id, date, weight_kg, created_at FROM weight_entries ORDER BY date DESC LIMIT $1",
+    `${SELECT_WEIGHT} ORDER BY date DESC LIMIT $1`,
     [limit]
   );
   return c.json(result.rows);
@@ -21,7 +23,7 @@ weightRoutes.get("/recent", async (c) => {
 
 weightRoutes.get("/by-date/:date", async (c) => {
   const result = await pool.query<WeightEntry>(
-    "SELECT id, date, weight_kg, created_at FROM weight_entries WHERE date = $1",
+    `${SELECT_WEIGHT} WHERE date = $1`,
     [c.req.param("date")]
   );
   return c.json(result.rows[0] ?? null);
@@ -29,14 +31,14 @@ weightRoutes.get("/by-date/:date", async (c) => {
 
 weightRoutes.get("/", async (c) => {
   const result = await pool.query<WeightEntry>(
-    "SELECT id, date, weight_kg, created_at FROM weight_entries ORDER BY date ASC"
+    `${SELECT_WEIGHT} ORDER BY date ASC`
   );
   return c.json(result.rows);
 });
 
 weightRoutes.get("/:id", async (c) => {
   const result = await pool.query<WeightEntry>(
-    "SELECT id, date, weight_kg, created_at FROM weight_entries WHERE id = $1",
+    `${SELECT_WEIGHT} WHERE id = $1`,
     [c.req.param("id")]
   );
   return c.json(result.rows[0] ?? null);
@@ -48,7 +50,7 @@ weightRoutes.post("/upsert", async (c) => {
     `INSERT INTO weight_entries (date, weight_kg)
      VALUES ($1, $2)
      ON CONFLICT (date) DO UPDATE SET weight_kg = EXCLUDED.weight_kg
-     RETURNING id, date, weight_kg, created_at`,
+     RETURNING id, TO_CHAR(date, 'YYYY-MM-DD') AS date, weight_kg, created_at`,
     [date, weight_kg]
   );
   return c.json(result.rows[0]);
@@ -58,7 +60,7 @@ weightRoutes.put("/:id", async (c) => {
   const { date, weight_kg } = await c.req.json<{ date: string; weight_kg: number }>();
   const result = await pool.query<WeightEntry>(
     `UPDATE weight_entries SET date = $1, weight_kg = $2
-     WHERE id = $3 RETURNING id, date, weight_kg, created_at`,
+     WHERE id = $3 RETURNING id, TO_CHAR(date, 'YYYY-MM-DD') AS date, weight_kg, created_at`,
     [date, weight_kg, c.req.param("id")]
   );
   return c.json(result.rows[0] ?? null);

@@ -11,16 +11,18 @@ type InjectionEntry = {
 
 export const injectionsRoutes = new Hono();
 
+const SELECT_INJECTION = "SELECT id, TO_CHAR(date, 'YYYY-MM-DD') AS date, dose_mg, site, created_at FROM injection_entries";
+
 injectionsRoutes.get("/", async (c) => {
   const result = await pool.query<InjectionEntry>(
-    "SELECT id, date, dose_mg, site, created_at FROM injection_entries ORDER BY date DESC"
+    `${SELECT_INJECTION} ORDER BY date DESC`
   );
   return c.json(result.rows);
 });
 
 injectionsRoutes.get("/:id", async (c) => {
   const result = await pool.query<InjectionEntry>(
-    "SELECT id, date, dose_mg, site, created_at FROM injection_entries WHERE id = $1",
+    `${SELECT_INJECTION} WHERE id = $1`,
     [c.req.param("id")]
   );
   return c.json(result.rows[0] ?? null);
@@ -35,7 +37,7 @@ injectionsRoutes.post("/", async (c) => {
   const result = await pool.query<InjectionEntry>(
     `INSERT INTO injection_entries (date, dose_mg, site)
      VALUES ($1, $2, $3)
-     RETURNING id, date, dose_mg, site, created_at`,
+     RETURNING id, TO_CHAR(date, 'YYYY-MM-DD') AS date, dose_mg, site, created_at`,
     [date, dose_mg, site]
   );
   return c.json(result.rows[0], 201);
@@ -49,7 +51,7 @@ injectionsRoutes.put("/:id", async (c) => {
   }>();
   const result = await pool.query<InjectionEntry>(
     `UPDATE injection_entries SET date = $1, dose_mg = $2, site = $3
-     WHERE id = $4 RETURNING id, date, dose_mg, site, created_at`,
+     WHERE id = $4 RETURNING id, TO_CHAR(date, 'YYYY-MM-DD') AS date, dose_mg, site, created_at`,
     [date, dose_mg, site, c.req.param("id")]
   );
   return c.json(result.rows[0] ?? null);
