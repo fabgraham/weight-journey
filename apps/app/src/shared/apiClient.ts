@@ -2,7 +2,7 @@ const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 const API_SECRET = process.env.EXPO_PUBLIC_API_SECRET;
 
 if (!BASE_URL || !API_SECRET) {
-  throw new Error("Missing EXPO_PUBLIC_API_BASE_URL or EXPO_PUBLIC_API_SECRET");
+  console.error("Missing EXPO_PUBLIC_API_BASE_URL or EXPO_PUBLIC_API_SECRET");
 }
 
 type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
