@@ -4,7 +4,7 @@ import Svg, { Circle, Defs, Line, LinearGradient, Path, Rect, Stop, Text as SvgT
 
 import type { WeightRange } from "../selectors";
 import type { WeightEntry } from "../types";
-import { formatShortDisplayDate, toIsoDate } from "../../../shared/date";
+import { formatMonthYear, formatShortDisplayDate, toIsoDate } from "../../../shared/date";
 
 type WeightTrendCardProps = {
   entries: WeightEntry[];
@@ -37,7 +37,6 @@ const WEEK_ROW_HEIGHT = 38;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const monthFormat = new Intl.DateTimeFormat("en-GB", { month: "short" });
-const monthYearFormat = new Intl.DateTimeFormat("en-GB", { month: "short", year: "numeric" });
 const dayMonthYearFormat = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
 type SeriesPoint = {
@@ -101,8 +100,8 @@ function buildSeries(entries: WeightEntry[], detail: Detail): SeriesPoint[] {
     weight: Number(average(group.map((e) => e.weight_kg)).toFixed(1)),
     label:
       detail === "week"
-        ? `w/c ${formatShortDisplayDate(key)} · avg`
-        : `${monthYearFormat.format(new Date(`${key}-01T00:00:00`))} · avg`,
+        ? `w/c ${formatShortDisplayDate(key)}`
+        : formatMonthYear(new Date(`${key}-01T00:00:00`)),
   }));
 }
 
@@ -210,15 +209,6 @@ function buildWeekBuckets(entries: WeightEntry[]): WeekBucket[] {
     }));
 }
 
-function getAvgWeeklyLoss(entries: WeightEntry[]): number | null {
-  if (entries.length < 2) return null;
-  const first = entries[0];
-  const last = entries.at(-1)!;
-  const days = Math.max(1, (toTime(last.date) - toTime(first.date)) / DAY_MS);
-  const totalLoss = first.weight_kg - last.weight_kg;
-  return Number((totalLoss / (days / 7)).toFixed(2));
-}
-
 export function WeightTrendCard({ entries, range }: WeightTrendCardProps) {
   const [detail, setDetail] = useState<Detail>("month");
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -247,8 +237,6 @@ export function WeightTrendCard({ entries, range }: WeightTrendCardProps) {
     pointCount <= 1 || (contentWidth - PAD_LEFT - PAD_RIGHT) / (pointCount - 1) >= 10;
 
   const weekBuckets = useMemo(() => buildWeekBuckets(entries), [entries]);
-  const avgWeeklyLoss = useMemo(() => getAvgWeeklyLoss(entries), [entries]);
-
 
   if (!entries.length) {
     return (
@@ -262,19 +250,9 @@ export function WeightTrendCard({ entries, range }: WeightTrendCardProps) {
   return (
     <View className="-mx-4 mt-6 rounded-[26px] border border-[#ece5d9] bg-[#fffaf4]">
       {/* Header */}
-      <View className="flex-row items-center justify-between px-4 pt-5">
-        <View>
-          <Text className="text-xl font-semibold text-[#173126]">Trend</Text>
-          <Text className="mt-0.5 text-sm text-[#4b5a51]">{range} range</Text>
-        </View>
-        {avgWeeklyLoss != null ? (
-          <View className="rounded-2xl bg-[#102d20] px-4 py-3">
-            <Text className="text-xs text-[#d8efe2]">avg/week</Text>
-            <Text className="mt-0.5 text-lg font-semibold text-white">
-              {avgWeeklyLoss > 0 ? `−${avgWeeklyLoss}` : `+${Math.abs(avgWeeklyLoss)}`} kg
-            </Text>
-          </View>
-        ) : null}
+      <View className="px-4 pt-5">
+        <Text className="text-xl font-semibold text-[#173126]">Trend</Text>
+        <Text className="mt-0.5 text-sm text-[#4b5a51]">{range} range</Text>
       </View>
 
       {isAllRange ? (
@@ -340,7 +318,7 @@ export function WeightTrendCard({ entries, range }: WeightTrendCardProps) {
                       left: Math.max(4, Math.min(selected.x - TOOLTIP_WIDTH / 2, contentWidth - TOOLTIP_WIDTH - 4)),
                     }}
                   >
-                    <Text className="text-base font-semibold text-white">{selected.weight} kg</Text>
+                    <Text className="text-base font-semibold text-white">{selected.weight.toFixed(1)} kg</Text>
                     <Text className="text-xs text-[#d8efe2]">{selected.label}</Text>
                   </View>
                 ) : null}
