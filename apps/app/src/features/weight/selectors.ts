@@ -59,18 +59,6 @@ export function getVisibleWeights(entries: WeightEntry[], range: WeightRange, ex
   return newestFirst;
 }
 
-export function getWeightDomain(entries: WeightEntry[]) {
-  if (!entries.length) {
-    return { min: 0, max: 0 };
-  }
-
-  const values = entries.map((entry) => entry.weight_kg);
-  return {
-    min: Math.min(...values),
-    max: Math.max(...values),
-  };
-}
-
 export function getDaysOnJourney(entries: WeightEntry[]) {
   const latest = getLatestWeight(entries);
   const endDate = latest ? new Date(`${latest.date}T00:00:00`) : new Date();
