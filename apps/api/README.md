@@ -11,6 +11,11 @@ commas; whitespace, paths, and trailing slashes are normalized to URL origins.
 
 Set `ANTHROPIC_API_KEY` on the **API service**, then restart/redeploy it. Never put
 this key in the Expo app, an `EXPO_PUBLIC_` variable, or a committed file.
+If the key is not scoped to one workspace (for example, a `sk-ant-usr-` key),
+also set `ANTHROPIC_WORKSPACE_ID` on the API service. Find the `wrkspc_...` ID in
+Claude Console → Settings → Workspaces, using the workspace in your credited
+organization. The backend sends it in the `anthropic-workspace-id` header.
+Workspace-scoped API keys do not need this setting.
 
 `POST /weight-search` takes `{ "question": "Find my most recent weigh-in above 65 kilos" }`.
 It uses the existing `x-api-key` authentication. The model is fixed to

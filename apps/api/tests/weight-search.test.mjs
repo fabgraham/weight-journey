@@ -110,3 +110,25 @@ test('validation diagnostics redact credentials', async () => {
       return true;
     });
 });
+
+test('user-level API keys send the configured workspace header', async () => {
+  const result = await interpretWeightQuestion('Find my minimum weight', 'sk-ant-usr-test', async (_, options) => {
+    assert.equal(options.headers['anthropic-workspace-id'], 'wrkspc_test');
+    return mockMessage({ kind: 'extreme', direction: 'lowest' });
+  }, 'wrkspc_test');
+  assert.equal(result.question, 'What was my lowest weight?');
+  // A personal key can also be scoped to one workspace; its prefix cannot tell us.
+  await interpretWeightQuestion('Find my minimum weight', 'sk-ant-usr-test', async (_, options) => {
+    assert.equal(options.headers['anthropic-workspace-id'], undefined);
+    return mockMessage({ kind: 'extreme', direction: 'lowest' });
+  }, '');
+  await assert.rejects(interpretWeightQuestion('Find my minimum weight', 'sk-ant-usr-test', async () =>
+    new Response(JSON.stringify({ error: { message: 'Workspace ID is required' } }), { status: 400 }),
+  ''), /Add ANTHROPIC_WORKSPACE_ID/);
+});
+
+test('invalid workspace errors are distinguished from unavailable models', async () => {
+  await assert.rejects(interpretWeightQuestion('Find my minimum weight', 'test-key', async () =>
+    new Response(JSON.stringify({ error: { message: 'Workspace not found' } }), { status: 404 }),
+  'wrkspc_missing'), /Check ANTHROPIC_WORKSPACE_ID/);
+});

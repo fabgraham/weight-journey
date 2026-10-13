@@ -40,16 +40,21 @@ export async function interpretWeightQuestion(
   question: unknown,
   apiKey = process.env.ANTHROPIC_API_KEY,
   fetcher: typeof fetch = fetch,
+  workspaceId = process.env.ANTHROPIC_WORKSPACE_ID?.trim(),
 ) {
   if (typeof question !== "string" || !question.trim() || question.length > 500) {
     throw new WeightSearchError("Enter a question of up to 500 characters.", 400);
   }
   if (!apiKey) throw new WeightSearchError("Claude search is not configured yet. You can still use the example searches.", 503);
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01",
+  };
+  if (workspaceId) headers["anthropic-workspace-id"] = workspaceId;
   let response: Response;
   try {
     response = await fetcher("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
+      headers,
       signal: AbortSignal.timeout(15000),
       body: JSON.stringify({
         model: WEIGHT_SEARCH_MODEL,
@@ -68,6 +73,10 @@ export async function interpretWeightQuestion(
     if (response.status === 401) throw new WeightSearchError("Claude rejected the API key. Check the key configured on the backend.", 503);
     if (typeof detail?.error?.message === "string" && /credit balance|billing|payment/i.test(detail.error.message)) {
       throw new WeightSearchError("Claude API credits are unavailable. Check your Claude Console billing and claimed Max credits.", 503);
+    }
+    if (typeof detail?.error?.message === "string" && /workspace/i.test(detail.error.message)) {
+      if (!workspaceId) throw new WeightSearchError("Add ANTHROPIC_WORKSPACE_ID to the backend for this Claude API key.", 503);
+      throw new WeightSearchError("Claude cannot access the selected workspace. Check ANTHROPIC_WORKSPACE_ID on the backend.", 503);
     }
     if (response.status === 404) throw new WeightSearchError("Claude Haiku 5.5 is not available through this API account.", 503);
     if (response.status === 429) throw new WeightSearchError("Claude has reached its usage limit. Please try again later.", 503);
