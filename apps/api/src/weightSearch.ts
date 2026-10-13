@@ -73,10 +73,10 @@ export async function interpretWeightQuestion(
     if (response.status === 429) throw new WeightSearchError("Claude has reached its usage limit. Please try again later.", 503);
     if (response.status === 403) throw new WeightSearchError("This Claude API key does not have permission to use search.", 503);
     if (response.status === 400) {
-      // Only expose model/parameter validation messages, and remove key-shaped values.
+      // Return the provider's validation reason, with credentials removed.
       const message = detail?.error?.message;
-      const reason = typeof message === "string" && /model|thinking|effort|max_tokens|output_config/i.test(message)
-        ? ` ${message.replace(/sk-[A-Za-z0-9_-]+/g, "[redacted]").replace(/[\r\n]/g, " ").slice(0, 300)}` : "";
+      const reason = typeof message === "string"
+        ? ` ${message.split(apiKey).join("[redacted]").replace(/sk-[A-Za-z0-9_-]+/g, "[redacted]").replace(/[\r\n]/g, " ").slice(0, 300)}` : "";
       throw new WeightSearchError(`Claude rejected the search configuration.${reason}`, 503);
     }
     throw new WeightSearchError("Claude search is unavailable. Try again or use an example search.", 503);

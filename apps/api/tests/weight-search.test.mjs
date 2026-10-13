@@ -101,3 +101,12 @@ test('provider errors distinguish key, credits, model access and rate limits', a
       new Response(JSON.stringify({ error: { message } }), { status })), expected);
   }
 });
+
+test('validation diagnostics redact credentials', async () => {
+  await assert.rejects(interpretWeightQuestion('Find my minimum weight', 'test-key', async () =>
+    new Response(JSON.stringify({ error: { message: 'Invalid credential test-key or sk-ant-private-example' } }), { status: 400 })), (error) => {
+      assert.doesNotMatch(error.message, /test-key|sk-ant-private-example/);
+      assert.match(error.message, /Invalid credential \[redacted\] or \[redacted\]/);
+      return true;
+    });
+});
