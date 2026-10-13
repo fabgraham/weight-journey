@@ -63,7 +63,18 @@ export async function interpretWeightQuestion(
   } catch {
     throw new WeightSearchError("Claude search is unavailable. Try again or use an example search.", 503);
   }
-  if (!response.ok) throw new WeightSearchError("Claude search is unavailable. Try again or use an example search.", 503);
+  if (!response.ok) {
+    const detail = await response.json().catch(() => null) as { error?: { type?: string; message?: string } } | null;
+    if (response.status === 401) throw new WeightSearchError("Claude rejected the API key. Check the key configured on the backend.", 503);
+    if (typeof detail?.error?.message === "string" && /credit balance|billing|payment/i.test(detail.error.message)) {
+      throw new WeightSearchError("Claude API credits are unavailable. Check your Claude Console billing and claimed Max credits.", 503);
+    }
+    if (response.status === 404) throw new WeightSearchError("Claude Haiku 5.5 is not available through this API account.", 503);
+    if (response.status === 429) throw new WeightSearchError("Claude has reached its usage limit. Please try again later.", 503);
+    if (response.status === 403) throw new WeightSearchError("This Claude API key does not have permission to use search.", 503);
+    if (response.status === 400) throw new WeightSearchError("Claude rejected the search configuration. The backend needs an update.", 503);
+    throw new WeightSearchError("Claude search is unavailable. Try again or use an example search.", 503);
+  }
   try {
     const message = await response.json() as { stop_reason?: string; content?: { type: string; text?: string }[] };
     if (message.stop_reason !== "end_turn" || !Array.isArray(message.content)) throw new Error("Incomplete response");

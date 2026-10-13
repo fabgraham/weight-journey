@@ -87,3 +87,17 @@ test('HTTP route rejects malformed requests and returns unavailable without a ke
     if (originalKey !== undefined) process.env.ANTHROPIC_API_KEY = originalKey;
   }
 });
+
+test('provider errors distinguish key, credits, model access and rate limits', async () => {
+  for (const [status, message, expected] of [
+    [401, 'authentication failed', /rejected the API key/],
+    [400, 'Your credit balance is too low', /credits are unavailable/],
+    [404, 'model not found', /Haiku 5.5 is not available/],
+    [429, 'rate limit', /usage limit/],
+    [403, 'forbidden', /permission/],
+    [400, 'invalid parameter', /search configuration/],
+  ]) {
+    await assert.rejects(interpretWeightQuestion('Find my minimum weight', 'test-key', async () =>
+      new Response(JSON.stringify({ error: { message } }), { status })), expected);
+  }
+});
