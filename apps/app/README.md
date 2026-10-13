@@ -31,6 +31,7 @@ orange on the graph. Clear search restores the selected date range.
 
 Supported examples:
 
+- Find when I last weighed between 64 and 65kg
 - When was the last time I was 65kg or more?
 - When was the last time my weight was more than 65kg?
 - When was I first below 70kg?
@@ -47,5 +48,8 @@ Clear search or selecting a date range discards any pending interpretation.
 See `../api/README.md` for backend setup and mocked fallback tests.
 “65kg or more” includes 65kg; “more than 65kg” excludes it. First/last questions
 return one recorded entry, including when “times” is used instead of “time”.
+“Between 64 and 65kg” includes both endpoints. First/last range searches return
+the earliest/latest matching record; “Show weights between 64 and 65kg” returns
+all matches. The lower endpoint must come first.
 
 Run the search regression checks with `npm run test:search` from `apps/app`.

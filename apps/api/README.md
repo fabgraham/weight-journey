@@ -26,8 +26,10 @@ a 256-token output cap. Thinking is disabled and effort is low.
 Claude receives the question and search instructions, with no saved weight
 records. Validated operations become canonical questions that the app executes
 against its own history. Unsupported requests return `{ "question": null }`.
-First/last comparisons, all matching entries, and lowest/highest weights are
-supported. Date restrictions, ranges, trends, and medical advice are unsupported.
+First/last comparisons, inclusive weight ranges, all matching entries, and
+lowest/highest weights are supported. Date restrictions, trends, and medical
+advice are unsupported. For example, “find when I last weighed between 64 and
+65kg” includes both 64kg and 65kg and returns the latest matching record.
 
 Local questions never call this endpoint. If the key is absent or Claude fails,
 local search continues to work and the app displays an actionable message.

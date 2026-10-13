@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import type { WeightSearchResult } from "../search";
 
-const EXAMPLES = ["When was the last time I was 65kg or more?", "Show weights below 70kg", "What was my lowest weight?"];
+const EXAMPLES = ["When did I last weigh between 64 and 65kg?", "When was the last time I was 65kg or more?", "What was my lowest weight?"];
 
 type Props = {
   result: WeightSearchResult | null;
@@ -20,7 +20,7 @@ export function WeightSearchCard({ result, disabled, searching = false, onSearch
   return (
     <View className="mt-6 rounded-[24px] bg-[#f8f5ef] px-5 py-5">
       <Text className="text-xl font-semibold text-[#173126]">Ask your weight history</Text>
-      <Text className="mt-2 text-sm leading-5 text-[#526056]">Find first or last weights above or below a value, or your highest and lowest weight. Searches your full history. Claude helps interpret unfamiliar questions.</Text>
+      <Text className="mt-2 text-sm leading-5 text-[#526056]">Find first or last weights above, below, or between values, or your highest and lowest weight. Searches your full history. Claude helps interpret unfamiliar questions.</Text>
       <TextInput
         accessibilityLabel="Question about your weight history"
         value={question}

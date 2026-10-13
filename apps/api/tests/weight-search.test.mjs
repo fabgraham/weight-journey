@@ -132,3 +132,20 @@ test('invalid workspace errors are distinguished from unavailable models', async
     new Response(JSON.stringify({ error: { message: 'Workspace not found' } }), { status: 404 }),
   'wrkspc_missing'), /Check ANTHROPIC_WORKSPACE_ID/);
 });
+
+test('inclusive ranges preserve both bounds and ordering and reject invalid constraints', async () => {
+  const result = await interpretWeightQuestion('find when I last weighed between 64 and 65kg', 'test-key', async () =>
+    mockMessage({ kind: 'range', minimum: 64, maximum: 65, order: 'last' }));
+  assert.equal(result.question, 'last weight between 64 and 65kg');
+  assert.equal(toSearchQuestion({ kind: 'range', minimum: 64, maximum: 65, order: 'all' }), 'Show weights between 64 and 65kg');
+  assert.equal(toSearchQuestion({ kind: 'range', minimum: 64.5, maximum: 65, order: 'first' }), 'first weight between 64.5 and 65kg');
+  for (const query of [
+    { kind: 'range', minimum: 65, maximum: 64, order: 'last' },
+    { kind: 'range', minimum: '64', maximum: 65, order: 'last' },
+    { kind: 'range', minimum: 64, maximum: Infinity, order: 'last' },
+    { kind: 'range', minimum: 64, maximum: 65, order: 'last', after: '2026-01-01' },
+    { kind: 'range', minimum: 64, maximum: 65, order: 'last', exclusive: true },
+    { kind: 'range', minimum: 64, maximum: 65, order: 'latest' },
+    { kind: 'range', minimum: -1, maximum: 65, order: 'last' },
+  ]) assert.throws(() => toSearchQuestion(query));
+});

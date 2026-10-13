@@ -65,9 +65,38 @@ test('empty history and no matches return explicit answers', () => {
   assert.match(searchWeights(entries, 'Show weights above 100kg').answer, /No recorded weights/);
 });
 test('unsupported qualifiers, units, and negations are rejected', () => {
-  for (const question of ['Show weights below 70kg last month', 'Was I not above 65kg?', 'Show weights below 150lb', 'Show weights 150lb or more', 'Show weights 65kg or more last month', 'Why did my weight go up?', 'Show weights between 60 and 70kg']) {
+  for (const question of ['Show weights below 70kg last month', 'Was I not above 65kg?', 'Show weights below 150lb', 'Show weights 150lb or more', 'Show weights 65kg or more last month', 'Why did my weight go up?', 'Show weights between 60 and 70kg last month', 'Show weights between 64lb and 65kg', 'Show weights strictly between 64 and 65kg', 'Show weights not between 64 and 65kg']) {
     assert.equal(searchWeights(entries, question).supported, false, question);
   }
+});
+test('the requested range question finds the latest inclusive match', () => {
+  const history = [...entries, { id: 'new-outside', date: '2026-10-12', weight_kg: 66 }];
+  for (const question of ['find when I last weighed between 64 and 65kg', 'When did I last weigh between 64kg and 65kg?', 'Last weight between 64 and 65kg']) {
+    const result = searchWeights(history, question);
+    assert.equal(result.supported, true, question);
+    assert.deepEqual(result.entries.map((entry) => entry.id), ['latest'], question);
+    assert.match(result.answer, /between 64 and 65 kg \(inclusive\).*64 kg on 10 October 2026/);
+  }
+  assert.deepEqual(ids('Show weights between 64 and 65kg'), ['latest', 'tied', 'boundary']);
+  assert.deepEqual(ids('First weight between 64 and 65kg'), ['boundary']);
+  assert.deepEqual(ids('Show weights between 65 and 65,5kg'), ['boundary', 'above']);
+  assert.deepEqual(ids('Last weight between 65 and 65kg'), ['boundary']);
+});
+test('range search handles empty results and rejects reversed bounds', () => {
+  assert.match(searchWeights([], 'Last weight between 64 and 65kg').answer, /No weight entries/);
+  assert.match(searchWeights(entries, 'Last weight between 60 and 61kg').answer, /No recorded weights/);
+  assert.equal(searchWeights(entries, 'Last weight between 65 and 64kg').supported, false);
+});
+test('Claude range interpretations execute locally without losing either bound', async () => {
+  const interpretation = await interpretWeightQuestion('Find my latest weigh-in in the 64 to 65 kilo range', 'test-key', async () =>
+    new Response(JSON.stringify({ stop_reason: 'end_turn', content: [{ type: 'text', text: JSON.stringify({
+      kind: 'range', minimum: 64, maximum: 65, order: 'last',
+    }) }] })),
+  );
+  assert.equal(interpretation.question, 'last weight between 64 and 65kg');
+  const result = searchWeights(entries, interpretation.question);
+  assert.equal(result.supported, true);
+  assert.deepEqual(result.entries.map((entry) => entry.id), ['latest']);
 });
 test('search does not mutate the history', () => {
   const before = JSON.stringify(entries);
