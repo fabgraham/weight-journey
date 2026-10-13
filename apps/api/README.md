@@ -3,6 +3,9 @@
 Use Node.js 22 or later. Run `npm install`, copy `.env.example` to `.env`, fill in
 the database connection and API secret, then run `npm run dev`. The dev and start
 commands load `.env` when present. On Railway, use the service's Variables tab.
+The live app origin (`https://myweightjourney.vercel.app`) is always allowed by
+CORS. `CORS_ORIGIN` can add origins such as `http://localhost:8081`, separated by
+commas; whitespace, paths, and trailing slashes are normalized to URL origins.
 
 ## Claude search
 

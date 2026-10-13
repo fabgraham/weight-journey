@@ -6,14 +6,13 @@ import { weightRoutes } from "./routes/weight.js";
 import { injectionsRoutes } from "./routes/injections.js";
 import { profileRoutes } from "./routes/profile.js";
 import { searchRoutes } from "./routes/search.js";
+import { getAllowedOrigins } from "./cors.js";
 
 const app = new Hono();
 
 app.get("/health", (c) => c.json({ ok: true }));
 
-if (process.env.CORS_ORIGIN) {
-  app.use("*", cors({ origin: process.env.CORS_ORIGIN }));
-}
+app.use("*", cors({ origin: getAllowedOrigins() }));
 
 app.use("*", requireApiKey);
 
