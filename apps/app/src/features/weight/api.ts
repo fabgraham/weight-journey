@@ -1,6 +1,10 @@
 import { apiRequest } from "../../shared/apiClient";
 import type { WeightEntry } from "./types";
 
+export async function interpretWeightQuestion(question: string): Promise<{ question: string | null }> {
+  return apiRequest("/weight-search", "POST", { question });
+}
+
 // Postgres NUMERIC columns arrive as strings (e.g. "63.0"); convert so arithmetic doesn't concatenate.
 function toEntry(entry: WeightEntry): WeightEntry {
   return { ...entry, weight_kg: Number(entry.weight_kg) };

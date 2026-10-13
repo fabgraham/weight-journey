@@ -9,6 +9,8 @@ import { formatMonthYear, formatShortDisplayDate, toIsoDate } from "../../../sha
 type WeightTrendCardProps = {
   entries: WeightEntry[];
   range: WeightRange;
+  highlightedIds?: string[];
+  searchActive?: boolean;
 };
 
 type Detail = "month" | "week" | "entry";
@@ -209,7 +211,7 @@ function buildWeekBuckets(entries: WeightEntry[]): WeekBucket[] {
     }));
 }
 
-export function WeightTrendCard({ entries, range }: WeightTrendCardProps) {
+export function WeightTrendCard({ entries, range, highlightedIds = [], searchActive = false }: WeightTrendCardProps) {
   const [detail, setDetail] = useState<Detail>("month");
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [viewportWidth, setViewportWidth] = useState(0);
@@ -218,8 +220,8 @@ export function WeightTrendCard({ entries, range }: WeightTrendCardProps) {
   const scrollRef = useRef<ScrollView>(null);
 
   const isAllRange = range === "All";
-  const effectiveDetail: Detail = isAllRange ? detail : "entry";
-  const scrollable = isAllRange && detail !== "month";
+  const effectiveDetail: Detail = isAllRange && !searchActive ? detail : "entry";
+  const scrollable = isAllRange && !searchActive && detail !== "month";
 
   const series = useMemo(() => buildSeries(entries, effectiveDetail), [entries, effectiveDetail]);
   const contentWidth = scrollable
@@ -231,7 +233,7 @@ export function WeightTrendCard({ entries, range }: WeightTrendCardProps) {
     [series, contentWidth, visibleFrom, viewportWidth]
   );
 
-  const selected = chart.points.find((p) => p.key === selectedKey) ?? chart.points.at(-1) ?? null;
+  const selected = chart.points.find((p) => p.key === selectedKey) ?? chart.points.find((p) => p.key === highlightedIds[0]) ?? (searchActive ? null : chart.points.at(-1)) ?? null;
   const pointCount = chart.points.length;
   const showAllDots =
     pointCount <= 1 || (contentWidth - PAD_LEFT - PAD_RIGHT) / (pointCount - 1) >= 10;
@@ -252,10 +254,10 @@ export function WeightTrendCard({ entries, range }: WeightTrendCardProps) {
       {/* Header */}
       <View className="px-4 pt-5">
         <Text className="text-xl font-semibold text-[#173126]">Trend</Text>
-        <Text className="mt-0.5 text-sm text-[#4b5a51]">{range} range</Text>
+        <Text className="mt-0.5 text-sm text-[#4b5a51]">{searchActive ? "Full history · search matches in orange" : `${range} range`}</Text>
       </View>
 
-      {isAllRange ? (
+      {isAllRange && !searchActive ? (
         <View className="mx-4 mt-4 flex-row self-start rounded-full bg-[#efe9df] p-1">
           {DETAIL_OPTIONS.map((option) => (
             <Pressable
@@ -387,17 +389,18 @@ export function WeightTrendCard({ entries, range }: WeightTrendCardProps) {
                   ) : null}
                   {chart.points.map((point) => {
                     const isSelected = point.key === selected?.key;
-                    if (!isSelected && !showAllDots) return null;
+                    const isMatch = highlightedIds.includes(point.key);
+                    if (!isSelected && !isMatch && !showAllDots) return null;
                     return (
                       <Fragment key={point.key}>
-                        {isSelected ? (
-                          <Circle cx={point.x} cy={point.y} r="10" fill="#5079d4" opacity="0.15" />
+                        {isSelected || isMatch ? (
+                          <Circle cx={point.x} cy={point.y} r="10" fill={isMatch ? "#c0604a" : "#5079d4"} opacity="0.15" />
                         ) : null}
                         <Circle
                           cx={point.x}
                           cy={point.y}
-                          r={isSelected ? "5.5" : "3.5"}
-                          fill={isSelected ? "#5079d4" : "#8ba8e8"}
+                          r={isSelected || isMatch ? "5.5" : "3.5"}
+                          fill={isMatch ? "#c0604a" : isSelected ? "#5079d4" : "#8ba8e8"}
                           stroke="#ffffff"
                           strokeWidth={isSelected ? "2" : "1.5"}
                         />
@@ -438,7 +441,7 @@ export function WeightTrendCard({ entries, range }: WeightTrendCardProps) {
       </View>
 
       {/* Weekly averages */}
-      {weekBuckets.length >= 2 ? (
+      {!searchActive && weekBuckets.length >= 2 ? (
         <View className="border-t border-[#ece5d9] px-4 py-5">
           <View
             className="mb-2 flex-row items-baseline justify-between"

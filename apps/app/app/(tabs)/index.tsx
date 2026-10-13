@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 
+import { WeightSearchCard } from "../../src/features/weight/components/WeightSearchCard";
+import { searchWeights, type WeightSearchResult } from "../../src/features/weight/search";
+import { interpretWeightQuestion } from "../../src/features/weight/api";
 import { WeightTrendCard } from "../../src/features/weight/components/WeightTrendCard";
 import {
   getBmi,
@@ -20,13 +23,60 @@ import { useWeightStore } from "../../src/features/weight/store";
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const [searchQuestion, setSearchQuestion] = useState<string | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const searchRequest = useRef(0);
   const [selectedRange, setSelectedRange] = useState<WeightRange>("All");
   const [showAllEntries, setShowAllEntries] = useState(false);
   const [heightMetres, setHeightMetres] = useState<number | null>(null);
   const entries = useWeightStore((s) => s.entries);
+  const searchResult = useMemo<WeightSearchResult | null>(() => searchError
+    ? { supported: false, entries: [], answer: searchError }
+    : searchQuestion === null ? null : searchWeights(entries, searchQuestion), [entries, searchQuestion, searchError]);
+  const activeSearch = searchResult?.supported ? searchResult : null;
+  const highlightedIds = useMemo(() => activeSearch?.entries.map((entry) => entry.id) ?? [], [activeSearch]);
   const entriesLoading = useWeightStore((s) => s.entriesLoading);
   const entriesError = useWeightStore((s) => s.entriesError);
   const loadEntries = useWeightStore((s) => s.loadEntries);
+
+  function clearSearch() {
+    searchRequest.current += 1;
+    setSearchQuestion(null);
+    setSearchError(null);
+    setSearching(false);
+  }
+
+  async function runSearch(question: string) {
+    const request = ++searchRequest.current;
+    setSearchError(null);
+    setSearchQuestion(question);
+    const local = searchWeights(entries, question);
+    if (local.supported || !entries.length) {
+      setSearching(false);
+      return;
+    }
+    setSearching(true);
+    // Hide the local help message while Claude interprets the question.
+    setSearchQuestion(null);
+    try {
+      const interpretation = await interpretWeightQuestion(question);
+      if (request !== searchRequest.current) return;
+      const canonical = interpretation.question;
+      if (typeof canonical === "string" && searchWeights(entries, canonical).supported) {
+        setSearchQuestion(canonical);
+      } else {
+        setSearchQuestion(question);
+      }
+    } catch (error) {
+      if (request !== searchRequest.current) return;
+      setSearchError(error instanceof Error ? error.message : "Search is unavailable. Try an example search.");
+    } finally {
+      if (request === searchRequest.current) setSearching(false);
+    }
+  }
+
+  useEffect(() => () => { searchRequest.current += 1; }, []);
 
   useEffect(() => {
     loadEntries();
@@ -60,8 +110,8 @@ export default function DashboardScreen() {
   const weightChangePercent = getWeightChangePercent(entries);
   const bmi = getBmi(entries, heightMetres);
   const daysOnJourney = getDaysOnJourney(entries);
-  const filteredEntries = getFilteredWeights(entries, selectedRange);
-  const visibleEntries = getVisibleWeights(filteredEntries, selectedRange, showAllEntries);
+  const filteredEntries = getFilteredWeights(entries, activeSearch ? "All" : selectedRange);
+  const visibleEntries = activeSearch ? activeSearch.entries : getVisibleWeights(filteredEntries, selectedRange, showAllEntries);
 
   useEffect(() => {
     setShowAllEntries(false);
@@ -69,6 +119,7 @@ export default function DashboardScreen() {
 
   return (
     <ScrollView
+      keyboardShouldPersistTaps="handled"
       className="flex-1 bg-[#f5f1ea]"
       contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 68, paddingBottom: 32 }}
     >
@@ -111,6 +162,14 @@ export default function DashboardScreen() {
           </View>
         ) : null}
 
+        <WeightSearchCard
+          result={searchResult}
+          disabled={entriesLoading || Boolean(entriesError) || searching}
+          searching={searching}
+          onSearch={runSearch}
+          onClear={clearSearch}
+        />
+
         <Pressable
           className="mt-6 rounded-full bg-[#032414] px-6 py-5"
           onPress={() => router.push({ pathname: "/log", params: { type: "weight" } })}
@@ -122,15 +181,23 @@ export default function DashboardScreen() {
           {["All", "1m", "3m", "6m"].map((range) => (
             <Pressable
               key={range}
-              className={`rounded-full px-5 py-3 ${selectedRange === range ? "bg-[#efe9df]" : "bg-transparent"}`}
-              onPress={() => setSelectedRange(range as WeightRange)}
+              className={`rounded-full px-5 py-3 ${(activeSearch ? "All" : selectedRange) === range ? "bg-[#efe9df]" : "bg-transparent"}`}
+              onPress={() => { clearSearch(); setSelectedRange(range as WeightRange); }}
             >
               <Text className="text-lg font-semibold text-[#173126]">{range}</Text>
             </Pressable>
           ))}
         </View>
 
-        {!entriesLoading && !entriesError ? <WeightTrendCard entries={filteredEntries} range={selectedRange} /> : null}
+        {!entriesLoading && !entriesError ? (
+          <WeightTrendCard
+            key={activeSearch ? searchQuestion : "history"}
+            entries={filteredEntries}
+            range={activeSearch ? "All" : selectedRange}
+            highlightedIds={highlightedIds}
+            searchActive={Boolean(activeSearch)}
+          />
+        ) : null}
 
         <View className="mt-8 rounded-[24px] bg-[#f8f5ef] px-5 py-6">
           {entriesLoading ? (
@@ -158,16 +225,17 @@ export default function DashboardScreen() {
               </View>
 
               <View className="mt-8 border-t border-[#e4ddd2] pt-5">
-                <Text className="text-base font-semibold text-[#173126]">Recent entries</Text>
+                <Text className="text-base font-semibold text-[#173126]">{activeSearch ? "Search results" : "Recent entries"}</Text>
 
                 <View className="mt-3">
-                  {visibleEntries.map((e, i) => {
-                    const prev = visibleEntries[i + 1];
+                  {visibleEntries.map((e) => {
+                    const entryIndex = entries.findIndex((entry) => entry.id === e.id);
+                    const prev = entries[entryIndex - 1];
                     const delta = prev != null ? Number((e.weight_kg - prev.weight_kg).toFixed(1)) : null;
                     return (
                       <Pressable
                         key={e.id}
-                        className="flex-row items-center justify-between border-b border-[#f0ebe2] py-3"
+                        className={`flex-row items-center justify-between border-b border-[#f0ebe2] py-3 ${activeSearch ? "rounded-xl bg-[#e4ecfb] px-3" : ""}`}
                         onPress={() =>
                           router.push({
                             pathname: "/log",
@@ -191,7 +259,7 @@ export default function DashboardScreen() {
                       </Pressable>
                     );
                   })}
-                  {!showAllEntries && visibleEntries.length < filteredEntries.length ? (
+                  {!activeSearch && !showAllEntries && visibleEntries.length < filteredEntries.length ? (
                     <Pressable
                       className="mt-3 rounded-full border border-[#d4cfc8] bg-transparent px-6 py-3"
                       onPress={() => setShowAllEntries(true)}
@@ -202,7 +270,7 @@ export default function DashboardScreen() {
                     </Pressable>
                   ) : null}
                   {!visibleEntries.length ? (
-                    <Text className="text-sm text-[#6c6a63]">No entries yet.</Text>
+                    <Text className="text-sm text-[#6c6a63]">{activeSearch ? "No matching entries." : "No entries yet."}</Text>
                   ) : null}
                 </View>
               </View>
