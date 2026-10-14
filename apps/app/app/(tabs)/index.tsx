@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 
 import { WeightSearchCard } from "../../src/features/weight/components/WeightSearchCard";
 import { searchWeights, type WeightSearchResult } from "../../src/features/weight/search";
-import { interpretWeightQuestion } from "../../src/features/weight/api";
+import { askWeightHistory } from "../../src/features/weight/api";
 import { WeightTrendCard } from "../../src/features/weight/components/WeightTrendCard";
 import {
   getBmi,
@@ -26,6 +26,7 @@ export default function DashboardScreen() {
   const [searchQuestion, setSearchQuestion] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [claudeResult, setClaudeResult] = useState<WeightSearchResult | null>(null);
   const searchRequest = useRef(0);
   const [selectedRange, setSelectedRange] = useState<WeightRange>("All");
   const [showAllEntries, setShowAllEntries] = useState(false);
@@ -33,7 +34,7 @@ export default function DashboardScreen() {
   const entries = useWeightStore((s) => s.entries);
   const searchResult = useMemo<WeightSearchResult | null>(() => searchError
     ? { supported: false, entries: [], answer: searchError }
-    : searchQuestion === null ? null : searchWeights(entries, searchQuestion), [entries, searchQuestion, searchError]);
+    : claudeResult ?? (searchQuestion === null ? null : searchWeights(entries, searchQuestion)), [entries, searchQuestion, searchError, claudeResult]);
   const activeSearch = searchResult?.supported ? searchResult : null;
   const highlightedIds = useMemo(() => activeSearch?.entries.map((entry) => entry.id) ?? [], [activeSearch]);
   const entriesLoading = useWeightStore((s) => s.entriesLoading);
@@ -44,33 +45,31 @@ export default function DashboardScreen() {
     searchRequest.current += 1;
     setSearchQuestion(null);
     setSearchError(null);
+    setClaudeResult(null);
     setSearching(false);
   }
 
   async function runSearch(question: string) {
     const request = ++searchRequest.current;
     setSearchError(null);
-    setSearchQuestion(question);
+    setClaudeResult(null);
+    setSearchQuestion(null);
     const local = searchWeights(entries, question);
-    if (local.supported || !entries.length) {
+    if (local.supported) {
+      setSearchQuestion(question);
       setSearching(false);
       return;
     }
     setSearching(true);
-    // Hide the local help message while Claude interprets the question.
-    setSearchQuestion(null);
     try {
-      const interpretation = await interpretWeightQuestion(question);
+      const result = await askWeightHistory(question);
       if (request !== searchRequest.current) return;
-      const canonical = interpretation.question;
-      if (typeof canonical === "string" && searchWeights(entries, canonical).supported) {
-        setSearchQuestion(canonical);
-      } else {
-        setSearchQuestion(question);
-      }
+      setSearchQuestion(question);
+      setClaudeResult(result);
     } catch (error) {
       if (request !== searchRequest.current) return;
-      setSearchError(error instanceof Error ? error.message : "Search is unavailable. Try an example search.");
+      const message = error instanceof Error ? error.message : "Search is unavailable. Try again.";
+      setSearchError(message);
     } finally {
       if (request === searchRequest.current) setSearching(false);
     }

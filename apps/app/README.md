@@ -25,31 +25,23 @@ Deploy on all platforms with Expo Application Services (EAS).
 
 ## Weight history search
 
-“Ask your weight history” sits above Log weight. It searches all saved entries,
-shows matching entries in the list, and highlights their individual points in
-orange on the graph. Clear search restores the selected date range.
+“Ask about your weight history” sits above Log weight. The app first tries its
+local parser against all saved records. Supported local questions get an
+immediate answer without a Claude call or comment. Local searches include
+first/last weights, inclusive weight ranges, strict or inclusive comparisons,
+and highest/lowest records (including ties).
 
-Supported examples:
+Questions the local parser cannot handle go to the backend's `/weight-search`
+endpoint. Claude Sonnet 5.5 can request filtered weight history and calculated
+summaries through validated read-only tools, then return an answer and an optional
+comment. This supports date restrictions and comparisons between periods without
+adding a parser rule for each question. Relevant summaries and limited record
+samples are sent to Claude; database credentials and unrelated records stay on
+the backend. See `../api/README.md` for setup, limits, and data handling.
 
-- Find when I last weighed between 64 and 65kg
-- When was the last time I was 65kg or more?
-- When was the last time my weight was more than 65kg?
-- When was I first below 70kg?
-- Show weights at least 65kg
-- What was my lowest weight?
-
-Supported wording uses a local question parser with no API cost. Unfamiliar
-wording falls back to Claude Haiku 5.5 through the backend's `/weight-search`
-endpoint when `ANTHROPIC_API_KEY` is configured on the API service. Only the
-question is sent to Claude; weight records remain in the app. The backend
-validates the interpreted search before the app calculates the answer locally.
-Unsupported date restrictions, units, or operations show examples to try instead.
-Clear search or selecting a date range discards any pending interpretation.
-See `../api/README.md` for backend setup and mocked fallback tests.
-“65kg or more” includes 65kg; “more than 65kg” excludes it. First/last questions
-return one recorded entry, including when “times” is used instead of “time”.
-“Between 64 and 65kg” includes both endpoints. First/last range searches return
-the earliest/latest matching record; “Show weights between 64 and 65kg” returns
-all matches. The lower endpoint must come first.
+Both paths show matching records in the list and highlight their points in orange
+on the graph. Clear search or selecting a date range discards pending results.
+If Claude is unavailable, unsupported local questions display an error; supported
+local questions continue working.
 
 Run the search regression checks with `npm run test:search` from `apps/app`.

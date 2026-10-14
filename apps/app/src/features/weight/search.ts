@@ -5,6 +5,7 @@ export type WeightSearchResult = {
   supported: boolean;
   entries: WeightEntry[];
   answer: string;
+  comment?: string | null;
 };
 
 const HELP = 'Try “When did I last weigh between 64 and 65kg?”, “Show weights below 70kg”, or “What was my lowest weight?”';

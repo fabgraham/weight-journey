@@ -1,8 +1,12 @@
 import { apiRequest } from "../../shared/apiClient";
 import type { WeightEntry } from "./types";
+import type { WeightSearchResult } from "./search";
 
-export async function interpretWeightQuestion(question: string): Promise<{ question: string | null }> {
-  return apiRequest("/weight-search", "POST", { question });
+export async function askWeightHistory(question: string): Promise<WeightSearchResult> {
+  const result = await apiRequest<Omit<WeightSearchResult, "entries"> & {
+    entries: Pick<WeightEntry, "id" | "date" | "weight_kg">[];
+  }>("/weight-search", "POST", { question });
+  return { ...result, entries: result.entries.map((entry) => ({ ...entry, weight_kg: Number(entry.weight_kg), created_at: "" })) };
 }
 
 // Postgres NUMERIC columns arrive as strings (e.g. "63.0"); convert so arithmetic doesn't concatenate.

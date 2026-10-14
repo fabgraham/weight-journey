@@ -12,9 +12,6 @@ const dateUrl = moduleUrl(transpile(readFileSync(new URL('../src/shared/date.ts'
 const source = transpile(readFileSync(new URL('../src/features/weight/search.ts', import.meta.url), 'utf8'))
   .replace('"../../shared/date"', JSON.stringify(dateUrl));
 const { searchWeights } = await import(moduleUrl(source));
-const { interpretWeightQuestion } = await import(moduleUrl(transpile(
-  readFileSync(new URL('../../api/src/weightSearch.ts', import.meta.url), 'utf8'),
-)));
 const entries = [
   { id: 'latest', date: '2026-10-10', weight_kg: 64 },
   { id: 'old', date: '2025-02-12', weight_kg: 80 },
@@ -87,31 +84,25 @@ test('range search handles empty results and rejects reversed bounds', () => {
   assert.match(searchWeights(entries, 'Last weight between 60 and 61kg').answer, /No recorded weights/);
   assert.equal(searchWeights(entries, 'Last weight between 65 and 64kg').supported, false);
 });
-test('Claude range interpretations execute locally without losing either bound', async () => {
-  const interpretation = await interpretWeightQuestion('Find my latest weigh-in in the 64 to 65 kilo range', 'test-key', async () =>
-    new Response(JSON.stringify({ stop_reason: 'end_turn', content: [{ type: 'text', text: JSON.stringify({
-      kind: 'range', minimum: 64, maximum: 65, order: 'last',
-    }) }] })),
-  );
-  assert.equal(interpretation.question, 'last weight between 64 and 65kg');
-  const result = searchWeights(entries, interpretation.question);
-  assert.equal(result.supported, true);
-  assert.deepEqual(result.entries.map((entry) => entry.id), ['latest']);
-});
 test('search does not mutate the history', () => {
   const before = JSON.stringify(entries);
   searchWeights(entries, 'Show weights above 60kg');
   assert.equal(JSON.stringify(entries), before);
 });
-test('Claude interpretation executes against local history with inclusive matching', async () => {
-  const interpretation = await interpretWeightQuestion('Find my most recent weigh-in of at least 65 kilos', 'test-key', async () =>
-    new Response(JSON.stringify({
-      stop_reason: 'end_turn',
-      content: [{ type: 'text', text: JSON.stringify({ kind: 'comparison', operator: '>=', value: 65, order: 'last' }) }],
-    })),
-  );
-  const result = searchWeights(entries, interpretation.question);
-  assert.equal(result.supported, true);
-  assert.deepEqual(result.entries.map((entry) => entry.id), ['boundary']);
-  assert.match(result.answer, /65 kg on 1 October 2026/);
+
+test('assistant API preserves complete records, answer and optional comment and normalizes numeric weights', async () => {
+  const fixture = { supported: true, answer: 'Found matching weights this year.', comment: 'Weights varied by 1 kg.', entries: [
+    { id: 'a', date: '2026-01-01', weight_kg: '65.0' },
+    { id: 'b', date: '2026-10-14', weight_kg: '64.0' },
+  ] };
+  const clientUrl = moduleUrl(`export const requests = []; export async function apiRequest(...args) { requests.push(args); return ${JSON.stringify(fixture)}; }`);
+  const apiSource = transpile(readFileSync(new URL('../src/features/weight/api.ts', import.meta.url), 'utf8'))
+    .replace('"../../shared/apiClient"', JSON.stringify(clientUrl));
+  const { askWeightHistory } = await import(moduleUrl(apiSource));
+  const result = await askWeightHistory('Show weights between 64 and 65kg this year');
+  assert.equal(result.answer, fixture.answer);
+  assert.equal(result.comment, fixture.comment);
+  assert.deepEqual(result.entries.map(e => [e.id, e.weight_kg]), [['a', 65], ['b', 64]]);
+  const { requests } = await import(clientUrl);
+  assert.deepEqual(requests, [['/weight-search', 'POST', { question: 'Show weights between 64 and 65kg this year' }]]);
 });

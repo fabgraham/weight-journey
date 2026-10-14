@@ -2,8 +2,6 @@ import { useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import type { WeightSearchResult } from "../search";
 
-const EXAMPLES = ["When did I last weigh between 64 and 65kg?", "When was the last time I was 65kg or more?", "What was my lowest weight?"];
-
 type Props = {
   result: WeightSearchResult | null;
   disabled: boolean;
@@ -19,8 +17,7 @@ export function WeightSearchCard({ result, disabled, searching = false, onSearch
   }
   return (
     <View className="mt-6 rounded-[24px] bg-[#f8f5ef] px-5 py-5">
-      <Text className="text-xl font-semibold text-[#173126]">Ask your weight history</Text>
-      <Text className="mt-2 text-sm leading-5 text-[#526056]">Find first or last weights above, below, or between values, or your highest and lowest weight. Searches your full history. Claude helps interpret unfamiliar questions.</Text>
+      <Text className="text-xl font-semibold text-[#173126]">Ask about your weight history</Text>
       <TextInput
         accessibilityLabel="Question about your weight history"
         value={question}
@@ -43,21 +40,14 @@ export function WeightSearchCard({ result, disabled, searching = false, onSearch
         <View accessibilityLiveRegion="polite" className="mt-4 rounded-2xl bg-[#e4ecfb] px-4 py-4">
           <Text className="text-sm font-semibold text-[#173126]">{result.supported ? "Answer" : "Try another question"}</Text>
           <Text className="mt-2 text-base leading-6 text-[#173126]">{result.answer}</Text>
+          {result.comment ? (
+            <View className="mt-3 border-t border-[#cbd7eb] pt-3">
+              <Text className="text-sm font-semibold text-[#173126]">Claude’s comment</Text>
+              <Text className="mt-2 text-base leading-6 text-[#173126]">{result.comment}</Text>
+            </View>
+          ) : null}
         </View>
-      ) : (
-        <View className="mt-4 gap-2">
-          {EXAMPLES.map((example) => (
-            <Pressable
-              key={example}
-              accessibilityRole="button"
-              disabled={disabled}
-              onPress={() => { setQuestion(example); onSearch(example); }}
-            >
-              <Text className="text-sm text-[#5079d4]">{example}</Text>
-            </Pressable>
-          ))}
-        </View>
-      )}
+      ) : null}
     </View>
   );
 }
