@@ -30,7 +30,10 @@ test('date-restricted range uses parameterized SELECT and returns records plus C
     assert.equal(payload.model, 'claude-sonnet-5-5');
     assert.equal(payload.max_tokens, 4096);
     assert.deepEqual(payload.thinking, { type: 'adaptive' });
-    assert.deepEqual(payload.output_config, { effort: 'medium' });
+    assert.equal(payload.output_config.effort, 'medium');
+    assert.equal(payload.output_config.format.type, 'json_schema');
+    assert.deepEqual(payload.output_config.format.schema.required, ['supported', 'answer', 'comment', 'result_set_ids']);
+    assert.equal(payload.output_config.format.schema.additionalProperties, false);
     assert.match(payload.system, /2026-10-14/);
     assert.equal(payload.tools[0].name, 'read_weight_history');
     if (calls === 1) {
@@ -45,6 +48,7 @@ test('date-restricted range uses parameterized SELECT and returns records plus C
       type: 'thinking', thinking: 'Resolve the year and request matching records.', signature: 'provider-signature',
     });
     const evidence = JSON.parse(payload.messages[2].content[0].content);
+    assert.equal(evidence.result_set_id, 'read1');
     assert.equal(evidence.count, 2);
     assert.equal(evidence.average_kg, 64.5);
     assert.equal(evidence.change_kg, -1);
@@ -113,6 +117,60 @@ test('period comparisons select verified result sets and deduplicate overlapping
     : final(['period1', 'period2']), async () => ({ rows: ++reads === 1 ? rows : [rows[1]] }));
   assert.equal(reads, 2);
   assert.deepEqual(result.entries.map(e => e.id), ['b', 'a']);
+});
+
+test('an omitted optional comment does not reject otherwise valid supporting records', async () => {
+  let calls = 0;
+  const result = await ask('Give me all weights between 64 and 65kg this year', async () => ++calls === 1
+    ? reply([tool({ selection: 'all', minimum: 64, maximum: 65, start_date: '2026-01-01', end_date: '2026-12-31' })], 'tool_use')
+    : reply([{ type: 'text', text: JSON.stringify({ supported: true, answer: 'Found 2 weights.', result_set_ids: ['read1'] }) }]), async () => ({ rows }));
+  assert.equal(result.comment, null);
+  assert.deepEqual(result.entries.map(e => e.id), ['b', 'a']);
+});
+
+test('wrong or missing result-set references are corrected once without repeating reads or losing full results', async () => {
+  for (const wrongIds of [['a', 'b'], [], ['invented']]) {
+    let calls = 0;
+    let reads = 0;
+    const many = Array.from({ length: 40 }, (_, i) => ({ id: String(i), date: '2026-10-14', weight_kg: 64.5 }));
+    const result = await ask('Give me all weights between 64 and 65kg this year', async (_, options) => {
+      if (++calls === 1) return reply([tool({ selection: 'all', minimum: 64, maximum: 65, start_date: '2026-01-01', end_date: '2026-12-31' })], 'tool_use');
+      if (calls === 2) return final(wrongIds);
+      const payload = JSON.parse(options.body);
+      assert.equal(payload.messages[3].role, 'assistant');
+      assert.equal(payload.messages[4].role, 'user');
+      assert.match(payload.messages[4].content, /only available result_set_ids are \["read1"\]/);
+      assert.match(payload.messages[4].content, /do not repeat the database reads/);
+      return final(['read1'], { answer: 'Found 40 recorded weights this year.' });
+    }, async () => { reads++; return { rows: many }; });
+    assert.equal(calls, 3);
+    assert.equal(reads, 1);
+    assert.equal(result.entries.length, 40);
+  }
+});
+
+test('an empty matching result set retains its reference during answer correction', async () => {
+  let calls = 0;
+  let reads = 0;
+  const result = await ask('Show weights above 200kg this year', async () => {
+    if (++calls === 1) return reply([tool({ selection: 'all', minimum: 200 })], 'tool_use');
+    return final(calls === 2 ? [] : ['read1'], { answer: 'No matching records.', comment: null });
+  }, async () => { reads++; return { rows: [] }; });
+  assert.equal(calls, 3);
+  assert.equal(reads, 1);
+  assert.equal(result.supported, true);
+  assert.deepEqual(result.entries, []);
+});
+
+test('invalid JSON can be corrected after evidence has been retrieved', async () => {
+  let calls = 0;
+  const result = await ask('Show weights this year', async () => {
+    if (++calls === 1) return reply([tool()], 'tool_use');
+    if (calls === 2) return reply([{ type: 'text', text: 'invalid JSON' }]);
+    return final();
+  }, async () => ({ rows }));
+  assert.equal(calls, 3);
+  assert.equal(result.entries.length, 2);
 });
 
 test('empty searches and clarification have distinct supported states', async () => {

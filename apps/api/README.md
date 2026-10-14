@@ -44,7 +44,12 @@ profile information, notes, and injection records are never sent to Claude.
 Records sent as tool evidence are processed by Anthropic; tool access does not
 make that processing local. Answers and optional comments are model-generated;
 record IDs are validated against complete backend result sets, but that does not
-verify every statement in the text.
+verify every statement in the text. Tool evidence explicitly supplies its
+`result_set_id`, which identifies the full result set rather than an individual
+weight record. The API requests JSON schema output for the answer. If a final
+answer still fails validation after data was retrieved, it allows one correction
+attempt using the existing evidence, within the same five-call limit. Invalid
+references are never silently accepted; an omitted optional comment becomes null.
 
 This uses the existing shared-key authentication and personal weight database.
 It does not add multi-user isolation; multi-user hosting would require identity
