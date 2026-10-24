@@ -167,11 +167,12 @@ export default function DashboardScreen() {
           onClear={clearSearch}
         />
 
-        <View className="mt-6 flex-row gap-5">
-          {["All", "1m", "3m", "6m"].map((range) => (
+        {/* Five ranges share the row equally on phones; natural widths from the sm breakpoint. */}
+        <View className="mt-6 flex-row gap-1 sm:gap-5">
+          {["All", "1M", "3M", "6M", "1Y"].map((range) => (
             <Pressable
               key={range}
-              className={`rounded-full px-5 py-3 ${(activeSearch ? "All" : selectedRange) === range ? "bg-[#efe9df]" : "bg-transparent"}`}
+              className={`flex-1 items-center rounded-full py-3 sm:flex-none sm:px-5 ${(activeSearch ? "All" : selectedRange) === range ? "bg-[#efe9df]" : "bg-transparent"}`}
               onPress={() => { clearSearch(); setSelectedRange(range as WeightRange); }}
             >
               <Text className="text-lg font-semibold text-[#173126]">{range}</Text>

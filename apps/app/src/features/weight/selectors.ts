@@ -1,6 +1,6 @@
 import type { WeightEntry } from "./types";
 
-export type WeightRange = "All" | "1m" | "3m" | "6m";
+export type WeightRange = "All" | "1M" | "3M" | "6M" | "1Y";
 const JOURNEY_START_DATE = "2025-02-12";
 
 function subtractDays(date: Date, days: number) {
@@ -41,9 +41,10 @@ export function getFilteredWeights(entries: WeightEntry[], range: WeightRange) {
   const latest = new Date(entries.at(-1)!.date);
   let cutoff = latest;
 
-  if (range === "1m") cutoff = subtractDays(latest, 30);
-  if (range === "3m") cutoff = subtractDays(latest, 90);
-  if (range === "6m") cutoff = subtractDays(latest, 180);
+  if (range === "1M") cutoff = subtractDays(latest, 30);
+  if (range === "3M") cutoff = subtractDays(latest, 90);
+  if (range === "6M") cutoff = subtractDays(latest, 180);
+  if (range === "1Y") cutoff = subtractDays(latest, 365);
 
   return entries.filter((entry) => new Date(entry.date) >= cutoff);
 }
@@ -53,8 +54,8 @@ export function getVisibleWeights(entries: WeightEntry[], range: WeightRange, ex
 
   if (expanded) return newestFirst;
   if (range === "All") return newestFirst.slice(0, 12);
-  if (range === "3m") return newestFirst.slice(0, 8);
-  if (range === "6m") return newestFirst.slice(0, 12);
+  if (range === "3M") return newestFirst.slice(0, 8);
+  if (range === "6M" || range === "1Y") return newestFirst.slice(0, 12);
 
   return newestFirst;
 }
