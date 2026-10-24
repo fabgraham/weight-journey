@@ -1,6 +1,17 @@
 import type { WeightEntry } from "./types";
 
-export type WeightRange = "All" | "1M" | "3M" | "6M" | "1Y";
+export type PresetRange = "All" | "1M" | "3M" | "6M" | "1Y";
+// A calendar year such as "2025" (January to December).
+export type WeightRange = PresetRange | `${number}`;
+
+export function isYearRange(range: WeightRange) {
+  return /^\d{4}$/.test(range);
+}
+
+// Years that have at least one entry, newest first.
+export function getEntryYears(entries: WeightEntry[]) {
+  return [...new Set(entries.map((entry) => Number(entry.date.slice(0, 4))))].sort((a, b) => b - a);
+}
 const JOURNEY_START_DATE = "2025-02-12";
 
 function subtractDays(date: Date, days: number) {
@@ -37,6 +48,7 @@ export function getBmi(entries: WeightEntry[], heightMetres: number | null) {
 
 export function getFilteredWeights(entries: WeightEntry[], range: WeightRange) {
   if (!entries.length || range === "All") return entries;
+  if (isYearRange(range)) return entries.filter((entry) => entry.date.startsWith(`${range}-`));
 
   const latest = new Date(entries.at(-1)!.date);
   let cutoff = latest;
@@ -55,7 +67,7 @@ export function getVisibleWeights(entries: WeightEntry[], range: WeightRange, ex
   if (expanded) return newestFirst;
   if (range === "All") return newestFirst.slice(0, 12);
   if (range === "3M") return newestFirst.slice(0, 8);
-  if (range === "6M" || range === "1Y") return newestFirst.slice(0, 12);
+  if (range === "6M" || range === "1Y" || isYearRange(range)) return newestFirst.slice(0, 12);
 
   return newestFirst;
 }

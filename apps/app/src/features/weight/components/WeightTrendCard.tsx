@@ -2,7 +2,7 @@ import { Fragment, useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import Svg, { Circle, Defs, Line, LinearGradient, Path, Rect, Stop, Text as SvgText } from "react-native-svg";
 
-import type { WeightRange } from "../selectors";
+import { isYearRange, type WeightRange } from "../selectors";
 import type { WeightEntry } from "../types";
 import { formatMonthYear, formatShortDisplayDate, toIsoDate } from "../../../shared/date";
 
@@ -254,7 +254,7 @@ export function WeightTrendCard({ entries, range, highlightedIds = [], searchAct
       {/* Header */}
       <View className="px-4 pt-5">
         <Text className="text-xl font-semibold text-[#173126]">Trend</Text>
-        <Text className="mt-0.5 text-sm text-[#4b5a51]">{searchActive ? "Full history · search matches in orange" : `${range} range`}</Text>
+        <Text className="mt-0.5 text-sm text-[#4b5a51]">{searchActive ? "Full history · search matches in orange" : isYearRange(range) ? `${range} · January to December` : `${range} range`}</Text>
       </View>
 
       {isAllRange && !searchActive ? (

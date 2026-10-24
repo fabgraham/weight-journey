@@ -5,11 +5,13 @@ import { useRouter } from "expo-router";
 import { WeightSearchCard } from "../../src/features/weight/components/WeightSearchCard";
 import { searchWeights, type WeightSearchResult } from "../../src/features/weight/search";
 import { askWeightHistory } from "../../src/features/weight/api";
+import { RangeTabs } from "../../src/features/weight/components/RangeTabs";
 import { QuickLogWeight } from "../../src/features/weight/components/QuickLogWeight";
 import { WeightTrendCard } from "../../src/features/weight/components/WeightTrendCard";
 import {
   getBmi,
   getDaysOnJourney,
+  getEntryYears,
   getFilteredWeights,
   getLatestWeight,
   getTotalLost,
@@ -167,18 +169,11 @@ export default function DashboardScreen() {
           onClear={clearSearch}
         />
 
-        {/* Five ranges share the row equally on phones; natural widths from the sm breakpoint. */}
-        <View className="mt-6 flex-row gap-1 sm:gap-5">
-          {["All", "1M", "3M", "6M", "1Y"].map((range) => (
-            <Pressable
-              key={range}
-              className={`flex-1 items-center rounded-full py-3 sm:flex-none sm:px-5 ${(activeSearch ? "All" : selectedRange) === range ? "bg-[#efe9df]" : "bg-transparent"}`}
-              onPress={() => { clearSearch(); setSelectedRange(range as WeightRange); }}
-            >
-              <Text className="text-lg font-semibold text-[#173126]">{range}</Text>
-            </Pressable>
-          ))}
-        </View>
+        <RangeTabs
+          value={activeSearch ? "All" : selectedRange}
+          years={getEntryYears(entries)}
+          onChange={(range) => { clearSearch(); setSelectedRange(range); }}
+        />
 
         {!entriesLoading && !entriesError ? (
           <WeightTrendCard
