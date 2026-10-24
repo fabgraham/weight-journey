@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
-  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -27,10 +25,13 @@ import {
   updateWeightEntry,
 } from "../../src/features/weight/api";
 import { useWeightStore } from "../../src/features/weight/store";
+import { confirmWeightOverwrite } from "../../src/features/weight/confirmOverwrite";
 import { DateField } from "../../src/shared/ui/DateField";
+import { toIsoDate } from "../../src/shared/date";
 
 function getToday() {
-  return new Date().toISOString().slice(0, 10);
+  // Local calendar date; toISOString() is UTC and lags a day just after midnight in BST.
+  return toIsoDate(new Date());
 }
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -44,21 +45,6 @@ function getErrorMessage(error: unknown, fallback: string) {
 
   if (error instanceof Error) return error.message;
   return fallback;
-}
-
-async function confirmWeightOverwrite(date: string) {
-  const message = `A weight entry for ${date} already exists. Do you want to overwrite it?`;
-
-  if (Platform.OS === "web" && typeof window !== "undefined") {
-    return window.confirm(message);
-  }
-
-  return new Promise<boolean>((resolve) => {
-    Alert.alert("Overwrite weight entry", message, [
-      { text: "Cancel", style: "cancel", onPress: () => resolve(false) },
-      { text: "Overwrite", style: "destructive", onPress: () => resolve(true) },
-    ]);
-  });
 }
 
 export default function LogScreen() {

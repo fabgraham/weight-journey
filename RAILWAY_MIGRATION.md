@@ -28,12 +28,12 @@ Connect to the Railway database and run the existing schema file.
 
 **Option A — psql (terminal)**
 ```bash
-psql "<your-railway-database-url>" -f supabase/schema.sql
+psql "<your-railway-database-url>" -f apps/api/db/schema.sql
 ```
 
 **Option B — TablePlus / another GUI client**
 1. New connection → paste the Database URL
-2. Open a query window → paste contents of `supabase/schema.sql` → run
+2. Open a query window → paste contents of `apps/api/db/schema.sql` → run
 
 ---
 

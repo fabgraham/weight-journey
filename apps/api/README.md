@@ -7,6 +7,9 @@ The live app origin (`https://myweightjourney.vercel.app`) is always allowed by
 CORS. `CORS_ORIGIN` can add origins such as `http://localhost:8081`, separated by
 commas; whitespace, paths, and trailing slashes are normalized to URL origins.
 
+The database tables are defined in `db/schema.sql`. To create them on a new
+Postgres instance, run `psql "$DATABASE_URL" -f db/schema.sql`.
+
 ## Claude search
 
 Set `ANTHROPIC_API_KEY` on the **API service**, then restart/redeploy it. Never put

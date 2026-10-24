@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import { WeightSearchCard } from "../../src/features/weight/components/WeightSearchCard";
 import { searchWeights, type WeightSearchResult } from "../../src/features/weight/search";
 import { askWeightHistory } from "../../src/features/weight/api";
+import { QuickLogWeight } from "../../src/features/weight/components/QuickLogWeight";
 import { WeightTrendCard } from "../../src/features/weight/components/WeightTrendCard";
 import {
   getBmi,
@@ -129,12 +130,12 @@ export default function DashboardScreen() {
 
         {!entriesLoading && !entriesError ? (
           <View className="mt-6 flex-row flex-wrap justify-between gap-y-4">
-            <View className="w-[48%] rounded-[24px] bg-[#faf8f3] px-5 py-5">
+            <View className="w-[48%] rounded-[24px] bg-[#f8f5ef] px-5 py-5">
               <Text className="text-lg text-[#173126]">Start weight</Text>
               <Text className="mt-2 text-4xl font-semibold text-[#173126]">102 kg</Text>
             </View>
 
-            <View className="w-[48%] rounded-[24px] bg-[#faf8f3] px-5 py-5">
+            <View className="w-[48%] rounded-[24px] bg-[#f8f5ef] px-5 py-5">
               <Text className="text-lg text-[#173126]">Current</Text>
               <Text className="mt-2 text-4xl font-semibold text-[#173126]">
                 {currentWeight != null ? `${currentWeight} kg` : "--"}
@@ -144,22 +145,19 @@ export default function DashboardScreen() {
               </Text>
             </View>
 
-            <View className="w-[48%] rounded-[24px] bg-[#faf8f3] px-5 py-5">
+            <View className="w-[48%] rounded-[24px] bg-[#f8f5ef] px-5 py-5">
               <Text className="text-lg text-[#173126]">Your BMI</Text>
               <Text className="mt-2 text-4xl font-semibold text-[#173126]">{bmi != null ? bmi : "--"}</Text>
             </View>
 
-            <View className="w-[48%] rounded-[24px] bg-[#faf8f3] px-5 py-5">
-              <Text className="text-lg text-[#173126]">Goal</Text>
-              <Text className="mt-2 text-4xl font-semibold text-[#173126]">70 kg</Text>
-            </View>
-
-            <View className="w-[48%] rounded-[24px] bg-[#faf8f3] px-5 py-5">
+            <View className="w-[48%] rounded-[24px] bg-[#f8f5ef] px-5 py-5">
               <Text className="text-lg text-[#173126]">Days on journey</Text>
               <Text className="mt-2 text-4xl font-semibold text-[#173126]">{daysOnJourney}</Text>
             </View>
           </View>
         ) : null}
+
+        <QuickLogWeight />
 
         <WeightSearchCard
           result={searchResult}
@@ -168,13 +166,6 @@ export default function DashboardScreen() {
           onSearch={runSearch}
           onClear={clearSearch}
         />
-
-        <Pressable
-          className="mt-6 rounded-full bg-[#032414] px-6 py-5"
-          onPress={() => router.push({ pathname: "/log", params: { type: "weight" } })}
-        >
-          <Text className="text-center text-2xl font-semibold text-white">Log weight</Text>
-        </Pressable>
 
         <View className="mt-6 flex-row gap-5">
           {["All", "1m", "3m", "6m"].map((range) => (

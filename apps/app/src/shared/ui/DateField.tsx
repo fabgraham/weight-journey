@@ -8,6 +8,7 @@ type DateFieldProps = {
   value: string;
   maxDate?: string;
   onChange: (value: string) => void;
+  fieldClassName?: string;
 };
 
 const WEEK_DAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
@@ -18,7 +19,7 @@ function startOfCalendarGrid(year: number, monthIndex: number) {
   return jsDay === 0 ? 6 : jsDay - 1;
 }
 
-export function DateField({ label, value, maxDate, onChange }: DateFieldProps) {
+export function DateField({ label, value, maxDate, onChange, fieldClassName = "bg-[#f8f5ef]" }: DateFieldProps) {
   const initialDate = value ? new Date(`${value}T00:00:00`) : new Date();
   const [open, setOpen] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState(new Date(initialDate.getFullYear(), initialDate.getMonth(), 1));
@@ -56,7 +57,7 @@ export function DateField({ label, value, maxDate, onChange }: DateFieldProps) {
     <View>
       <Text className="mt-5 text-sm font-semibold uppercase tracking-[1px] text-[#7b7a74]">{label}</Text>
       <Pressable
-        className="mt-2 rounded-2xl bg-[#f8f5ef] px-4 py-4"
+        className={`mt-2 rounded-2xl px-4 py-4 ${fieldClassName}`}
         onPress={() => setOpen(true)}
       >
         <Text className="text-lg text-[#173126]">{formatDisplayDate(selectedValue)}</Text>

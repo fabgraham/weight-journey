@@ -5,7 +5,7 @@ This document turns the PRD into an actionable build checklist, with a strict se
 ## Current Status
 
 - Current build direction is `no-auth` for now:
-  - Supabase is configured as public/no-RLS in `supabase/schema.sql`
+  - Supabase is configured as public/no-RLS in `apps/api/db/schema.sql`
   - The Expo app uses a public Supabase client with no session flow
   - Vercel/static web export has been prepared in `apps/app`
 - Verified working today:

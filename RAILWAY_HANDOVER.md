@@ -48,7 +48,7 @@ EXPO_PUBLIC_API_SECRET=your-api-secret-here
 - Free account created at railway.app
 - Comes with $5 credit (enough for ~1 month)
 - PostgreSQL instance already created
-- Database URL: `postgresql://postgres:GwQnGaFBupslwoLrmJyhLXSNtFfrZiYS@thomas.proxy.rlwy.net:38329/railway`
+- Database URL: `<your-railway-database-url>`
 - **Regenerate the password after migration is complete** (Railway dashboard → Postgres service → Settings → Credentials)
 
 ---
@@ -65,7 +65,7 @@ brew install postgresql
 ### Step 2 — Run the schema on Railway Postgres
 ```bash
 cd /path/to/weight-journey
-psql "postgresql://postgres:GwQnGaFBupslwoLrmJyhLXSNtFfrZiYS@thomas.proxy.rlwy.net:38329/railway" -f supabase/schema.sql
+psql "<your-railway-database-url>" -f apps/api/db/schema.sql
 ```
 
 ### Step 3 — Export live data from Supabase (optional — skip to start fresh)
@@ -82,7 +82,7 @@ pg_dump \
   "<supabase-direct-connection-uri>" \
   > live-data.sql
 
-psql "postgresql://postgres:GwQnGaFBupslwoLrmJyhLXSNtFfrZiYS@thomas.proxy.rlwy.net:38329/railway" -f live-data.sql
+psql "<your-railway-database-url>" -f live-data.sql
 ```
 
 ### Step 4 — Install API dependencies

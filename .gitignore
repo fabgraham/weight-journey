@@ -27,3 +27,6 @@ yarn-error.log*
 
 # unrelated nested project kept out of this repo
 apps/mobile/
+
+# local database backups (secret-rotation runbook)
+backups/

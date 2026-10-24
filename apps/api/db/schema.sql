@@ -1,4 +1,4 @@
--- Schema + RLS for Weight Journey app (NO AUTH MODE)
+-- Postgres schema for the Weight Journey API (Railway). NO AUTH MODE.
 -- Matches PRD tables and keeps weight + injections separate.
 -- Uses PUBLIC tables (no RLS) for simplicity.
 
